@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Tic-Tac-Toe</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pink: #ec4899;
+    --purple: #a855f7;
+    --bg: #0f0a1a;
+    --card: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --glow-pink: rgba(236,72,153,0.35);
+    --glow-purple: rgba(168,85,247,0.35);
+  }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -20%; left: -10%;
+    width: 60%; height: 60%;
+    background: radial-gradient(circle, rgba(236,72,153,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%; right: -10%;
+    width: 60%; height: 60%;
+    background: radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .back-link {
+    position: absolute;
+    top: 16px; left: 20px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 400;
+    transition: color 0.2s;
+    z-index: 10;
+  }
+  .back-link:hover { color: var(--pink); }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 560px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-top: 40px;
+    letter-spacing: -0.5px;
+  }
+  h1 .crown { -webkit-text-fill-color: initial; font-size: 1.8rem; }
+
+  /* Glass card */
+  .glass {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 16px 20px;
+    width: 100%;
+  }
+
+  /* Selectors row */
+  .selectors {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .sel-group { display: flex; gap: 0; }
+  .sel-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    padding: 8px 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sel-btn:first-child { border-radius: 10px 0 0 10px; }
+  .sel-btn:last-child { border-radius: 0 10px 10px 0; }
+  .sel-btn.active {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: #fff;
+    border-color: transparent;
+  }
+  .sel-btn:hover:not(.active) { background: rgba(255,255,255,0.1); color: var(--text); }
+
+  /* Scoreboard */
+  .scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    text-align: center;
+  }
+  .score-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .score-icon { font-size: 1.5rem; }
+  .score-icon.king { color: var(--pink); }
+  .score-icon.queen { color: var(--purple); }
+  .score-icon.draw { color: var(--text-dim); font-size: 1.1rem; }
+  .score-val { font-size: 1.6rem; font-weight: 700; }
+  .score-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Status */
+  .status {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 500;
+    min-height: 1.6em;
+  }
+  .status .piece { font-size: 1.3rem; vertical-align: middle; }
+  .status .p1 { color: var(--pink); }
+  .status .p2 { color: var(--purple); }
+
+  /* Board wrapper - 3D */
+  .board-wrapper {
+    perspective: 800px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .board {
+    display: grid;
+    gap: 6px;
+    transform: rotateX(8deg) rotateY(-2deg);
+    transform-style: preserve-3d;
+    transition: transform 0.4s ease;
+    width: fit-content;
+  }
+  .board:hover { transform: rotateX(4deg) rotateY(0deg); }
+  .board.size-3 { grid-template-columns: repeat(3, 100px); }
+  .board.size-4 { grid-template-columns: repeat(4, 80px); }
+
+  .cell {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    font-size: 2.4rem;
+    user-select: none;
+  }
+  .board.size-4 .cell { font-size: 1.8rem; border-radius: 10px; }
+
+  .cell:hover:not(.taken):not(.won) {
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 0 20px rgba(236,72,153,0.15), 0 0 20px rgba(168,85,247,0.15);
+    transform: translateZ(6px);
+  }
+  .cell.taken { cursor: default; }
+
+  .cell .mark {
+    display: inline-block;
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .cell .mark.p1 { color: var(--pink); text-shadow: 0 0 16px var(--glow-pink); }
+  .cell .mark.p2 { color: var(--purple); text-shadow: 0 0 16px var(--glow-purple); }
+
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .cell.won {
+    animation: winGlow 1s ease-in-out infinite alternate;
+  }
+  .cell.won .mark.p1 { text-shadow: 0 0 24px var(--glow-pink), 0 0 48px var(--glow-pink); }
+  .cell.won .mark.p2 { text-shadow: 0 0 24px var(--glow-purple), 0 0 48px var(--glow-purple); }
+
+  @keyframes winGlow {
+    0% { background: rgba(255,255,255,0.04); box-shadow: none; }
+    100% { background: rgba(255,255,255,0.1); box-shadow: 0 0 30px rgba(236,72,153,0.25), 0 0 30px rgba(168,85,247,0.25); }
+  }
+
+  /* Shield overlay */
+  .cell .shield-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    background: rgba(100,160,255,0.08);
+    border-radius: inherit;
+    border: 1px solid rgba(100,160,255,0.25);
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+
+  /* Power-ups */
+  .powerups-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .powerups-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .powerups-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .pu-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pu-btn:hover:not(.used):not(.active) {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.15);
+  }
+  .pu-btn.active {
+    border-color: var(--pink);
+    background: rgba(236,72,153,0.12);
+    box-shadow: 0 0 12px rgba(236,72,153,0.2);
+  }
+  .pu-btn.active-p2 {
+    border-color: var(--purple);
+    background: rgba(168,85,247,0.12);
+    box-shadow: 0 0 12px rgba(168,85,247,0.2);
+  }
+  .pu-btn.used {
+    opacity: 0.3;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .pu-btn .pu-icon { font-size: 1rem; }
+
+  /* Buttons row */
+  .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    border: none;
+    color: #fff;
+  }
+  .btn.primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* Responsiveness */
+  @media (max-width: 480px) {
+    h1 { font-size: 1.7rem; }
+    .board.size-3 { grid-template-columns: repeat(3, 85px); }
+    .board.size-4 { grid-template-columns: repeat(4, 68px); }
+    .cell { font-size: 2rem; }
+    .board.size-4 .cell { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">&larr; Back to Home</a>
+
+<div class="container">
+  <h1><span class="crown">&#9813;</span> Royal Tic-Tac-Toe</h1>
+
+  <!-- Mode & Size selectors -->
+  <div class="glass">
+    <div class="selectors">
+      <div class="sel-group">
+        <button class="sel-btn active" data-mode="pvp" onclick="setMode('pvp')">PvP</button>
+        <button class="sel-btn" data-mode="ai" onclick="setMode('ai')">vs AI</button>
+      </div>
+      <div class="sel-group">
+        <button class="sel-btn active" data-size="3" onclick="setSize(3)">3&times;3</button>
+        <button class="sel-btn" data-size="4" onclick="setSize(4)">4&times;4</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="glass">
+    <div class="scoreboard">
+      <div class="score-item">
+        <span class="score-icon king">&#9818;</span>
+        <span class="score-val" id="score-p1">0</span>
+        <span class="score-label">King</span>
+      </div>
+      <div class="score-item">
+        <span class="score-icon draw">&#9868;</span>
+        <span class="score-val" id="score-draw">0</span>
+        <span class="score-label">Draw</span>
+      </div>
+      <div class="score-item">
+        <span class="score-icon queen">&#9819;</span>
+        <span class="score-val" id="score-p2">0</span>
+        <span class="score-label">Queen</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status" id="status"></div>
+
+  <!-- Board -->
+  <div class="board-wrapper">
+    <div class="board size-3" id="board"></div>
+  </div>
+
+  <!-- Power-ups -->
+  <div class="glass powerups-section" id="powerups-panel">
+    <div class="powerups-label" id="pu-label">King's Power-ups</div>
+    <div class="powerups-row" id="pu-row"></div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="btn-row">
+    <button class="btn primary" onclick="resetGame()">New Game</button>
+    <button class="btn" onclick="resetScores()">Reset Scores</button>
+  </div>
+</div>
+
+<script>
+// ---- State ----
+let mode = 'pvp';       // 'pvp' | 'ai'
+let boardSize = 3;       // 3 | 4
+let board = [];          // flat array, 0=empty, 1=P1(King), 2=P2(Queen)
+let shields = [];        // flat array, 0=none, 1=shielded by P1 (blocks P2), 2=shielded by P2 (blocks P1)
+let shieldTurnsLeft = []; // turns remaining for each shield
+let currentPlayer = 1;
+let gameOver = false;
+let winCells = [];
+let scores = { p1: 0, p2: 0, draw: 0 };
+
+// Power-ups: each player gets { shield, swap, bomb } = true/false (true = available)
+let powerups = {
+  1: { shield: true, swap: true, bomb: true },
+  2: { shield: true, swap: true, bomb: true }
+};
+let activePowerup = null; // null | 'shield' | 'swap' | 'bomb'
+
+const PIECES = { 1: '\u265A', 2: '\u265B' }; // King, Queen
+const PIECE_NAMES = { 1: 'King', 2: 'Queen' };
+
+// ---- DOM refs ----
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const puLabel = document.getElementById('pu-label');
+const puRow = document.getElementById('pu-row');
+const puPanel = document.getElementById('powerups-panel');
+
+// ---- Init ----
+function init() {
+  const n = boardSize * boardSize;
+  board = Array(n).fill(0);
+  shields = Array(n).fill(0);
+  shieldTurnsLeft = Array(n).fill(0);
+  currentPlayer = 1;
+  gameOver = false;
+  winCells = [];
+  activePowerup = null;
+  powerups = {
+    1: { shield: true, swap: true, bomb: true },
+    2: { shield: true, swap: true, bomb: true }
+  };
+  renderBoard();
+  renderPowerups();
+  updateStatus();
+}
+
+// ---- Mode / Size selectors ----
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  init();
+}
+function setSize(s) {
+  boardSize = s;
+  document.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('active', +b.dataset.size === s));
+  boardEl.className = 'board size-' + s;
+  init();
+}
+
+// ---- Render board ----
+function renderBoard() {
+  boardEl.innerHTML = '';
+  const n = boardSize * boardSize;
+  for (let i = 0; i < n; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (board[i] ? ' taken' : '') + (winCells.includes(i) ? ' won' : '');
+    cell.dataset.idx = i;
+
+    if (board[i]) {
+      const mark = document.createElement('span');
+      mark.className = 'mark p' + board[i];
+      mark.textContent = PIECES[board[i]];
+      cell.appendChild(mark);
+    }
+
+    if (shields[i] && !board[i]) {
+      const sh = document.createElement('div');
+      sh.className = 'shield-overlay';
+      sh.textContent = '\uD83D\uDEE1\uFE0F';
+      cell.appendChild(sh);
+    }
+
+    cell.addEventListener('click', () => onCellClick(i));
+    boardEl.appendChild(cell);
+  }
+}
+
+// ---- Render power-ups ----
+function renderPowerups() {
+  const isAI = mode === 'ai' && currentPlayer === 2;
+  const pu = powerups[currentPlayer];
+  puLabel.textContent = PIECE_NAMES[currentPlayer] + "'s Power-ups";
+  const pClass = currentPlayer === 1 ? 'active' : 'active-p2';
+
+  const items = [
+    { key: 'shield', icon: '\uD83D\uDEE1\uFE0F', label: 'Shield' },
+    { key: 'swap',   icon: '\uD83D\uDD04', label: 'Swap' },
+    { key: 'bomb',   icon: '\uD83D\uDCA3', label: 'Bomb' }
+  ];
+
+  puRow.innerHTML = '';
+  items.forEach(it => {
+    const btn = document.createElement('button');
+    const used = !pu[it.key];
+    const isActive = activePowerup === it.key;
+    btn.className = 'pu-btn' + (used ? ' used' : '') + (isActive ? ' ' + pClass : '');
+    btn.innerHTML = '<span class="pu-icon">' + it.icon + '</span>' + it.label;
+    btn.disabled = used || gameOver || isAI;
+    btn.addEventListener('click', () => togglePowerup(it.key));
+    puRow.appendChild(btn);
+  });
+
+  // Hide powerups panel in AI mode when it's AI turn
+  puPanel.style.opacity = isAI ? '0.4' : '1';
+}
+
+// ---- Toggle power-up ----
+function togglePowerup(key) {
+  if (gameOver) return;
+  if (!powerups[currentPlayer][key]) return;
+  activePowerup = activePowerup === key ? null : key;
+  renderPowerups();
+  updateStatus();
+}
+
+// ---- Status ----
+function updateStatus() {
+  if (gameOver) return; // status set elsewhere on game end
+  let html = '';
+  if (activePowerup) {
+    const names = { shield: '\uD83D\uDEE1\uFE0F Shield: click empty cell', swap: '\uD83D\uDD04 Swap: click opponent piece', bomb: '\uD83D\uDCA3 Bomb: click any piece' };
+    html = '<span class="p' + currentPlayer + '">' + names[activePowerup] + '</span>';
+  } else {
+    html = '<span class="piece p' + currentPlayer + '">' + PIECES[currentPlayer] + '</span> ' + PIECE_NAMES[currentPlayer] + "'s turn";
+  }
+  statusEl.innerHTML = html;
+}
+
+// ---- Cell click ----
+function onCellClick(i) {
+  if (gameOver) return;
+  if (mode === 'ai' && currentPlayer === 2) return; // AI's turn
+
+  if (activePowerup) {
+    handlePowerup(i);
+    return;
+  }
+
+  // Normal placement
+  if (board[i]) return;
+  // Blocked by shield?
+  if (shields[i] && shields[i] !== currentPlayer) return; // opponent's shield blocks us
+
+  placeMove(i, currentPlayer);
+}
+
+function placeMove(i, player) {
+  board[i] = player;
+  // Clear shield on this cell if any
+  shields[i] = 0;
+  shieldTurnsLeft[i] = 0;
+
+  // Decrement shield turns for shields placed by this player (they expire after opponent's next turn)
+  decrementShields(player);
+
+  if (checkWin(player)) {
+    gameOver = true;
+    if (player === 1) scores.p1++; else scores.p2++;
+    updateScoreDisplay();
+    renderBoard();
+    statusEl.innerHTML = '<span class="piece p' + player + '">' + PIECES[player] + '</span> ' + PIECE_NAMES[player] + ' wins!';
+    return;
+  }
+  if (board.every(c => c !== 0)) {
+    gameOver = true;
+    scores.draw++;
+    updateScoreDisplay();
+    renderBoard();
+    statusEl.textContent = "It's a draw!";
+    return;
+  }
+
+  currentPlayer = currentPlayer === 1 ? 2 : 1;
+  activePowerup = null;
+  renderBoard();
+  renderPowerups();
+  updateStatus();
+
+  if (mode === 'ai' && currentPlayer === 2 && !gameOver) {
+    setTimeout(aiMove, 350);
+  }
+}
+
+// ---- Shield decrement ----
+function decrementShields(placingPlayer) {
+  // Shields placed by the placing player should tick down.
+  // A shield blocks the opponent for 1 turn (the opponent's next move).
+  // We decrement shields owned by the OTHER player when it becomes their turn effectively,
+  // but simpler: shield lasts until the opponent has had a chance to be blocked once.
+  // Implementation: shield disappears after one full turn cycle.
+  for (let j = 0; j < shields.length; j++) {
+    if (shields[j] === placingPlayer && shieldTurnsLeft[j] > 0) {
+      shieldTurnsLeft[j]--;
+      if (shieldTurnsLeft[j] <= 0) {
+        shields[j] = 0;
+      }
+    }
+  }
+}
+
+// ---- Power-up handlers ----
+function handlePowerup(i) {
+  const pu = activePowerup;
+  const cp = currentPlayer;
+
+  if (pu === 'shield') {
+    if (board[i] !== 0 || shields[i]) return; // must be empty and unshielded
+    shields[i] = cp;
+    shieldTurnsLeft[i] = 1; // lasts for 1 opponent turn
+    powerups[cp].shield = false;
+    activePowerup = null;
+    // Shield doesn't end your turn by itself; it replaces your normal move
+    // Actually let's make it: shield uses your turn
+    currentPlayer = cp === 1 ? 2 : 1;
+    renderBoard();
+    renderPowerups();
+    updateStatus();
+    if (mode === 'ai' && currentPlayer === 2 && !gameOver) {
+      setTimeout(aiMove, 350);
+    }
+    return;
+  }
+
+  if (pu === 'swap') {
+    const opp = cp === 1 ? 2 : 1;
+    if (board[i] !== opp) return; // must click opponent's piece
+    board[i] = cp;
+    powerups[cp].swap = false;
+    activePowerup = null;
+    // Check if this creates a win
+    if (checkWin(cp)) {
+      gameOver = true;
+      if (cp === 1) scores.p1++; else scores.p2++;
+      updateScoreDisplay();
+      renderBoard();
+      statusEl.innerHTML = '<span class="piece p' + cp + '">' + PIECES[cp] + '</span> ' + PIECE_NAMES[cp] + ' wins!';
+      return;
+    }
+    currentPlayer = cp === 1 ? 2 : 1;
+    renderBoard();
+    renderPowerups();
+    updateStatus();
+    if (mode === 'ai' && currentPlayer === 2 && !gameOver) {
+      setTimeout(aiMove, 350);
+    }
+    return;
+  }
+
+  if (pu === 'bomb') {
+    if (board[i] === 0) return; // must click an occupied cell
+    board[i] = 0;
+    powerups[cp].bomb = false;
+    activePowerup = null;
+    currentPlayer = cp === 1 ? 2 : 1;
+    renderBoard();
+    renderPowerups();
+    updateStatus();
+    if (mode === 'ai' && currentPlayer === 2 && !gameOver) {
+      setTimeout(aiMove, 350);
+    }
+    return;
+  }
+}
+
+// ---- Win check ----
+function getLines() {
+  const n = boardSize;
+  const lines = [];
+  // Rows
+  for (let r = 0; r < n; r++) {
+    const line = [];
+    for (let c = 0; c < n; c++) line.push(r * n + c);
+    lines.push(line);
+  }
+  // Cols
+  for (let c = 0; c < n; c++) {
+    const line = [];
+    for (let r = 0; r < n; r++) line.push(r * n + c);
+    lines.push(line);
+  }
+  // Diags
+  const d1 = [], d2 = [];
+  for (let i = 0; i < n; i++) {
+    d1.push(i * n + i);
+    d2.push(i * n + (n - 1 - i));
+  }
+  lines.push(d1, d2);
+  return lines;
+}
+
+function checkWin(player) {
+  const lines = getLines();
+  for (const line of lines) {
+    if (line.every(i => board[i] === player)) {
+      winCells = line;
+      return true;
+    }
+  }
+  return false;
+}
+
+// ---- Score display ----
+function updateScoreDisplay() {
+  document.getElementById('score-p1').textContent = scores.p1;
+  document.getElementById('score-p2').textContent = scores.p2;
+  document.getElementById('score-draw').textContent = scores.draw;
+}
+
+// ---- Reset ----
+function resetGame() { init(); }
+function resetScores() { scores = { p1: 0, p2: 0, draw: 0 }; updateScoreDisplay(); init(); }
+
+// ---- AI (Minimax with alpha-beta) ----
+function aiMove() {
+  if (gameOver) return;
+
+  const maxDepth = boardSize === 3 ? 9 : 5;
+  let bestScore = -Infinity;
+  let bestIdx = -1;
+
+  const empties = [];
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === 0 && !(shields[i] && shields[i] !== 2)) empties.push(i);
+  }
+
+  // Quick check: if only one move, take it
+  if (empties.length === 1) {
+    placeMove(empties[0], 2);
+    return;
+  }
+
+  for (const i of empties) {
+    board[i] = 2;
+    const score = minimax(board, 0, false, -Infinity, Infinity, maxDepth);
+    board[i] = 0;
+    if (score > bestScore) {
+      bestScore = score;
+      bestIdx = i;
+    }
+  }
+
+  if (bestIdx >= 0) {
+    placeMove(bestIdx, 2);
+  }
+}
+
+function minimax(b, depth, isMax, alpha, beta, maxDepth) {
+  // Terminal checks
+  if (checkWinStatic(b, 2)) return 100 - depth;
+  if (checkWinStatic(b, 1)) return -100 + depth;
+
+  const empties = [];
+  for (let i = 0; i < b.length; i++) if (b[i] === 0) empties.push(i);
+  if (empties.length === 0 || depth >= maxDepth) return 0;
+
+  if (isMax) {
+    let best = -Infinity;
+    for (const i of empties) {
+      b[i] = 2;
+      const val = minimax(b, depth + 1, false, alpha, beta, maxDepth);
+      b[i] = 0;
+      best = Math.max(best, val);
+      alpha = Math.max(alpha, val);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const i of empties) {
+      b[i] = 1;
+      const val = minimax(b, depth + 1, true, alpha, beta, maxDepth);
+      b[i] = 0;
+      best = Math.min(best, val);
+      beta = Math.min(beta, val);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function checkWinStatic(b, player) {
+  const n = boardSize;
+  const lines = getLines();
+  for (const line of lines) {
+    if (line.every(i => b[i] === player)) return true;
+  }
+  return false;
+}
+
+// ---- Start ----
+init();
+</script>
+</body>
+</html>

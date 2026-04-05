@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Royal Memory Match</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root {
+      --pink: #ec4899;
+      --pink-light: #f9a8d4;
+      --purple: #a855f7;
+      --purple-deep: #7c3aed;
+      --bg-dark: #0f0a1a;
+      --bg-card: rgba(255,255,255,0.04);
+      --text: #f0e6ff;
+      --text-muted: #a78bcc;
+      --glow-pink: rgba(236,72,153,0.35);
+      --glow-purple: rgba(168,85,247,0.35);
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-dark);
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(168,85,247,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(236,72,153,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(124,58,237,0.06) 0%, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem 3rem;
+      overflow-x: hidden;
+    }
+
+    /* Back link */
+    .back-link {
+      position: absolute; top: 1rem; left: 1.5rem;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.85rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--pink-light); }
+    .back-link::before { content: '\2190 '; }
+
+    /* Title */
+    .title {
+      font-size: 2.4rem; font-weight: 800; text-align: center;
+      background: linear-gradient(135deg, var(--pink-light), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 0.3rem;
+    }
+    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; text-align: center; }
+
+    /* Controls */
+    .controls {
+      display: flex; gap: 0.75rem; align-items: center;
+      flex-wrap: wrap; justify-content: center; margin-bottom: 1.25rem;
+    }
+    .btn {
+      font-family: 'Outfit', sans-serif;
+      padding: 0.5rem 1.2rem; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--bg-card); color: var(--text);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      backdrop-filter: blur(8px); transition: all 0.25s;
+    }
+    .btn:hover {
+      border-color: var(--purple);
+      box-shadow: 0 0 20px var(--glow-purple);
+    }
+    .btn.active {
+      background: linear-gradient(135deg, var(--pink), var(--purple-deep));
+      border-color: transparent; color: #fff;
+    }
+    .btn-new {
+      background: linear-gradient(135deg, var(--purple-deep), var(--purple));
+      border-color: transparent; color: #fff;
+    }
+    .btn-new:hover {
+      box-shadow: 0 0 25px var(--glow-purple);
+      transform: translateY(-1px);
+    }
+
+    /* Stats bar */
+    .stats {
+      display: flex; gap: 2rem; justify-content: center;
+      flex-wrap: wrap; margin-bottom: 1.25rem;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.6rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--pink-light), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+    /* Best scores */
+    .best-score {
+      font-size: 0.75rem; color: var(--text-muted); text-align: center;
+      margin-bottom: 1rem; min-height: 1.1rem;
+    }
+    .best-score span { color: var(--pink-light); font-weight: 600; }
+
+    /* Card grid */
+    .grid {
+      display: grid;
+      gap: 0.6rem;
+      justify-content: center;
+      perspective: 1200px;
+    }
+    .grid.easy {
+      grid-template-columns: repeat(4, 1fr);
+      max-width: 420px; width: 100%;
+    }
+    .grid.hard {
+      grid-template-columns: repeat(6, 1fr);
+      max-width: 540px; width: 100%;
+    }
+
+    /* Card */
+    .card {
+      aspect-ratio: 1;
+      cursor: pointer;
+      perspective: 800px;
+    }
+    .card-inner {
+      position: relative; width: 100%; height: 100%;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .card.flipped .card-inner { transform: rotateY(180deg); }
+    .card.matched .card-inner { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute; inset: 0;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .card-back {
+      background: linear-gradient(135deg, var(--pink), var(--purple-deep));
+      font-size: 2rem;
+      color: rgba(255,255,255,0.3);
+      text-shadow: 0 0 10px rgba(255,255,255,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .card-back::after {
+      content: '\265A';
+      font-size: inherit;
+    }
+    .card-front {
+      transform: rotateY(180deg);
+      background: rgba(255,255,255,0.95);
+      font-size: 2.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .grid.hard .card-front { font-size: 1.8rem; }
+    .grid.hard .card-back { font-size: 1.4rem; }
+
+    .card.matched .card-face.card-front {
+      box-shadow: 0 0 20px rgba(74,222,128,0.4), 0 0 40px rgba(74,222,128,0.15);
+      border-color: rgba(74,222,128,0.4);
+    }
+    .card.matched { pointer-events: none; }
+    .card.locked { pointer-events: none; }
+
+    /* Card entrance */
+    .card { opacity: 0; transform: scale(0.8); animation: cardIn 0.3s ease forwards; }
+    @keyframes cardIn {
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Victory overlay */
+    .victory-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,10,26,0.85);
+      backdrop-filter: blur(8px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .victory-overlay.show { opacity: 1; pointer-events: auto; }
+    .victory-title {
+      font-size: 3rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--pink-light), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: victoryPulse 1.5s ease infinite;
+    }
+    @keyframes victoryPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .victory-stats { margin: 1.5rem 0; text-align: center; }
+    .victory-stats p {
+      font-size: 1.1rem; color: var(--text-muted); margin: 0.4rem 0;
+    }
+    .victory-stats p span { color: var(--pink-light); font-weight: 700; }
+    .victory-best {
+      font-size: 0.9rem; color: #4ade80; font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Confetti */
+    .confetti {
+      position: fixed; top: -10px; z-index: 101;
+      width: 10px; height: 10px;
+      border-radius: 2px; opacity: 0;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .title { font-size: 1.8rem; }
+      .grid.easy { max-width: 320px; gap: 0.5rem; }
+      .grid.hard { max-width: 360px; gap: 0.35rem; }
+      .card-front { font-size: 2rem; }
+      .card-back { font-size: 1.4rem; }
+      .grid.hard .card-front { font-size: 1.3rem; }
+      .grid.hard .card-back { font-size: 1rem; }
+      .stats { gap: 1.2rem; }
+      .stat-value { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">Royal Games</a>
+
+<h1 class="title">Royal Memory Match</h1>
+<p class="subtitle">Find all the matching chess piece pairs</p>
+
+<div class="controls">
+  <button class="btn active" data-difficulty="easy" onclick="setDifficulty('easy')">Easy 4&times;4</button>
+  <button class="btn" data-difficulty="hard" onclick="setDifficulty('hard')">Hard 6&times;6</button>
+  <button class="btn btn-new" onclick="newGame()">New Game</button>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-value" id="moves">0</div>
+    <div class="stat-label">Moves</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="pairs">0 / 8</div>
+    <div class="stat-label">Pairs</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="timer">0:00</div>
+    <div class="stat-label">Time</div>
+  </div>
+</div>
+
+<div class="best-score" id="bestScore"></div>
+
+<div class="grid easy" id="grid"></div>
+
+<div class="victory-overlay" id="victory">
+  <div class="victory-title">Victory!</div>
+  <div class="victory-stats" id="victoryStats"></div>
+  <div class="victory-best" id="victoryBest"></div>
+  <button class="btn btn-new" onclick="closeVictory(); newGame();">Play Again</button>
+</div>
+
+<script>
+  // Chess pieces with tint colors
+  const ALL_PIECES = [
+    { symbol: '\u2654', color: '#fef3c7' }, // ♔ warm gold
+    { symbol: '\u2655', color: '#fce7f3' }, // ♕ pink tint
+    { symbol: '\u2656', color: '#dbeafe' }, // ♖ blue tint
+    { symbol: '\u2657', color: '#d1fae5' }, // ♗ green tint
+    { symbol: '\u2658', color: '#ede9fe' }, // ♘ violet tint
+    { symbol: '\u2659', color: '#fff7ed' }, // ♙ orange tint
+    { symbol: '\u265A', color: '#fef9c3' }, // ♚ yellow
+    { symbol: '\u265B', color: '#fae8ff' }, // ♛ magenta tint
+    { symbol: '\u265C', color: '#e0f2fe' }, // ♜ sky tint
+    { symbol: '\u265D', color: '#dcfce7' }, // ♝ emerald tint
+    { symbol: '\u265E', color: '#f3e8ff' }, // ♞ purple tint
+    { symbol: '\u265F', color: '#fef2f2' }, // ♟ red tint
+    { symbol: '\u2654', color: '#e0e7ff' }, // extra pair variants
+    { symbol: '\u2655', color: '#ccfbf1' },
+    { symbol: '\u2656', color: '#fefce8' },
+    { symbol: '\u2657', color: '#ffe4e6' },
+    { symbol: '\u2658', color: '#f0fdf4' },
+    { symbol: '\u2659', color: '#eef2ff' },
+  ];
+
+  let difficulty = 'easy';
+  let totalPairs = 8;
+  let cards = [];
+  let flippedCards = [];
+  let matchedCount = 0;
+  let moves = 0;
+  let timerStarted = false;
+  let timerInterval = null;
+  let seconds = 0;
+  let locked = false;
+
+  // Best scores per difficulty (in-memory only)
+  const bestScores = { easy: null, hard: null };
+
+  const grid = document.getElementById('grid');
+  const movesEl = document.getElementById('moves');
+  const pairsEl = document.getElementById('pairs');
+  const timerEl = document.getElementById('timer');
+  const bestScoreEl = document.getElementById('bestScore');
+  const victoryOverlay = document.getElementById('victory');
+  const victoryStats = document.getElementById('victoryStats');
+  const victoryBest = document.getElementById('victoryBest');
+
+  function setDifficulty(d) {
+    difficulty = d;
+    totalPairs = d === 'easy' ? 8 : 18;
+    document.querySelectorAll('[data-difficulty]').forEach(b => {
+      b.classList.toggle('active', b.dataset.difficulty === d);
+    });
+    grid.className = 'grid ' + d;
+    newGame();
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function updateBestDisplay() {
+    const b = bestScores[difficulty];
+    if (b) {
+      bestScoreEl.innerHTML = 'Best: <span>' + b.moves + ' moves</span> in <span>' + formatTime(b.time) + '</span>';
+    } else {
+      bestScoreEl.textContent = '';
+    }
+  }
+
+  function newGame() {
+    // Reset state
+    clearInterval(timerInterval);
+    timerStarted = false;
+    seconds = 0;
+    moves = 0;
+    matchedCount = 0;
+    flippedCards = [];
+    locked = false;
+
+    movesEl.textContent = '0';
+    pairsEl.textContent = '0 / ' + totalPairs;
+    timerEl.textContent = '0:00';
+    updateBestDisplay();
+
+    // Pick pieces
+    const pieces = ALL_PIECES.slice(0, totalPairs);
+    // Create pairs
+    cards = [];
+    pieces.forEach((p, i) => {
+      cards.push({ id: i * 2, symbol: p.symbol, color: p.color, pairId: i });
+      cards.push({ id: i * 2 + 1, symbol: p.symbol, color: p.color, pairId: i });
+    });
+    shuffle(cards);
+
+    // Render
+    grid.innerHTML = '';
+    cards.forEach((c, idx) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.animationDelay = (idx * 0.03) + 's';
+      card.dataset.index = idx;
+      card.innerHTML =
+        '<div class="card-inner">' +
+          '<div class="card-face card-back"></div>' +
+          '<div class="card-face card-front" style="background:' + c.color + '">' + c.symbol + '</div>' +
+        '</div>';
+      card.addEventListener('click', () => flipCard(idx, card));
+      grid.appendChild(card);
+    });
+  }
+
+  function startTimer() {
+    if (timerStarted) return;
+    timerStarted = true;
+    timerInterval = setInterval(() => {
+      seconds++;
+      timerEl.textContent = formatTime(seconds);
+    }, 1000);
+  }
+
+  function flipCard(idx, el) {
+    if (locked) return;
+    if (el.classList.contains('flipped') || el.classList.contains('matched')) return;
+    if (flippedCards.length >= 2) return;
+
+    startTimer();
+    el.classList.add('flipped');
+    flippedCards.push({ idx, el, card: cards[idx] });
+
+    if (flippedCards.length === 2) {
+      moves++;
+      movesEl.textContent = moves;
+      checkMatch();
+    }
+  }
+
+  function checkMatch() {
+    const [a, b] = flippedCards;
+    if (a.card.pairId === b.card.pairId) {
+      // Match found
+      a.el.classList.add('matched');
+      b.el.classList.add('matched');
+      matchedCount++;
+      pairsEl.textContent = matchedCount + ' / ' + totalPairs;
+      flippedCards = [];
+
+      if (matchedCount === totalPairs) {
+        clearInterval(timerInterval);
+        setTimeout(showVictory, 500);
+      }
+    } else {
+      // No match - flip back
+      locked = true;
+      setTimeout(() => {
+        a.el.classList.remove('flipped');
+        b.el.classList.remove('flipped');
+        flippedCards = [];
+        locked = false;
+      }, 900);
+    }
+  }
+
+  function showVictory() {
+    // Check best score
+    const current = { moves, time: seconds };
+    const prev = bestScores[difficulty];
+    let isNewBest = false;
+    if (!prev || seconds < prev.time || (seconds === prev.time && moves < prev.moves)) {
+      bestScores[difficulty] = current;
+      isNewBest = true;
+    }
+
+    victoryStats.innerHTML =
+      '<p>Moves: <span>' + moves + '</span></p>' +
+      '<p>Time: <span>' + formatTime(seconds) + '</span></p>' +
+      '<p>Pairs: <span>' + totalPairs + '</span></p>';
+
+    victoryBest.textContent = isNewBest ? 'New Best Score!' : '';
+    victoryOverlay.classList.add('show');
+    launchConfetti();
+    updateBestDisplay();
+  }
+
+  function closeVictory() {
+    victoryOverlay.classList.remove('show');
+  }
+
+  function launchConfetti() {
+    const colors = ['#ec4899', '#a855f7', '#7c3aed', '#f9a8d4', '#4ade80', '#facc15', '#60a5fa'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.width = (Math.random() * 8 + 5) + 'px';
+      el.style.height = (Math.random() * 8 + 5) + 'px';
+      el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      el.style.animationDelay = (Math.random() * 1.5) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
+
+  // Init
+  newGame();
+</script>
+
+</body>
+</html>
