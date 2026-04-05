@@ -327,7 +327,7 @@
 <div class="grid easy" id="grid"></div>
 
 <div class="leaderboard" id="leaderboard">
-  <div class="leaderboard-title">🏆 Top 10 Scores</div>
+  <div class="leaderboard-title">🏆 Top 5 Scores</div>
   <div id="lbBody"><div class="leaderboard-empty">No scores yet — be the first!</div></div>
 </div>
 
@@ -372,7 +372,7 @@
   let seconds = 0;
   let locked = false;
 
-  // Top 10 leaderboard per difficulty (localStorage)
+  // Top 5 leaderboard per difficulty (localStorage)
   function loadLeaderboard() {
     try { return JSON.parse(localStorage.getItem('memory_leaderboard')) || { easy: [], hard: [] }; }
     catch { return { easy: [], hard: [] }; }
@@ -452,12 +452,12 @@
     lb[difficulty].push(entry);
     // Sort: first by time (asc), then by moves (asc)
     lb[difficulty].sort((a, b) => a.time - b.time || a.moves - b.moves);
-    // Keep only top 10
-    lb[difficulty] = lb[difficulty].slice(0, 10);
+    // Keep only top 5
+    lb[difficulty] = lb[difficulty].slice(0, 5);
     saveLeaderboard(lb);
     // Find position of this entry
     const idx = lb[difficulty].findIndex(e => e.date === entry.date);
-    return idx; // -1 if not in top 10
+    return idx; // -1 if not in top 5
   }
 
   function newGame() {
@@ -567,7 +567,7 @@
     if (isTop10 && idx === 0) {
       victoryBest.textContent = '🥇 New #1 Score!';
     } else if (isTop10) {
-      victoryBest.textContent = '🏆 Top 10 — Rank #' + (idx + 1) + '!';
+      victoryBest.textContent = '🏆 Top 5 — Rank #' + (idx + 1) + '!';
     } else {
       victoryBest.textContent = '';
     }
