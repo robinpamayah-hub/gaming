@@ -101,12 +101,66 @@
     }
     .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 
-    /* Best scores */
-    .best-score {
-      font-size: 0.75rem; color: var(--text-muted); text-align: center;
-      margin-bottom: 1rem; min-height: 1.1rem;
+    /* Player name input */
+    .player-section {
+      display: flex; gap: 0.75rem; align-items: center;
+      justify-content: center; margin-bottom: 1.25rem; flex-wrap: wrap;
     }
-    .best-score span { color: var(--pink-light); font-weight: 600; }
+    .player-input {
+      font-family: 'Outfit', sans-serif;
+      padding: 0.45rem 1rem; border-radius: 999px;
+      border: 1px solid rgba(168,85,247,0.4);
+      background: rgba(255,255,255,0.06);
+      color: var(--text); font-size: 0.85rem; font-weight: 500;
+      outline: none; width: 180px; text-align: center;
+      backdrop-filter: blur(8px); transition: all 0.25s;
+    }
+    .player-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .player-input:focus {
+      border-color: var(--pink);
+      box-shadow: 0 0 15px var(--glow-pink);
+    }
+
+    /* Leaderboard */
+    .leaderboard {
+      background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 1rem 1.25rem; margin-top: 1.5rem;
+      backdrop-filter: blur(12px); width: 100%; max-width: 420px;
+    }
+    .leaderboard-title {
+      font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; text-align: center; margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, var(--pink-light), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .leaderboard-empty {
+      font-size: 0.8rem; color: var(--text-muted); text-align: center;
+      padding: 0.5rem 0;
+    }
+    .lb-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.35rem 0.5rem; border-radius: 8px; font-size: 0.8rem;
+      transition: background 0.2s;
+    }
+    .lb-row:nth-child(even) { background: rgba(255,255,255,0.02); }
+    .lb-rank {
+      width: 1.5rem; text-align: center; font-weight: 700;
+      color: var(--text-muted); font-size: 0.75rem;
+    }
+    .lb-row:nth-child(1) .lb-rank { color: #fbbf24; }
+    .lb-row:nth-child(2) .lb-rank { color: #d1d5db; }
+    .lb-row:nth-child(3) .lb-rank { color: #cd7f32; }
+    .lb-name {
+      flex: 1; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lb-moves { color: var(--pink-light); font-weight: 600; min-width: 4rem; text-align: right; }
+    .lb-time { color: var(--purple); font-weight: 600; min-width: 3rem; text-align: right; }
+    .lb-new { animation: lbHighlight 2s ease; }
+    @keyframes lbHighlight {
+      0%, 30% { background: rgba(236,72,153,0.15); }
+      100% { background: transparent; }
+    }
 
     /* Card grid */
     .grid {
@@ -245,6 +299,10 @@
 <h1 class="title">Royal Memory Match</h1>
 <p class="subtitle">Find all the matching chess piece pairs</p>
 
+<div class="player-section">
+  <input type="text" class="player-input" id="playerName" placeholder="Enter your name" maxlength="20" />
+</div>
+
 <div class="controls">
   <button class="btn active" data-difficulty="easy" onclick="setDifficulty('easy')">Easy 4&times;4</button>
   <button class="btn" data-difficulty="hard" onclick="setDifficulty('hard')">Hard 6&times;6</button>
@@ -266,9 +324,12 @@
   </div>
 </div>
 
-<div class="best-score" id="bestScore"></div>
-
 <div class="grid easy" id="grid"></div>
+
+<div class="leaderboard" id="leaderboard">
+  <div class="leaderboard-title">🏆 Top 10 Scores</div>
+  <div id="lbBody"><div class="leaderboard-empty">No scores yet — be the first!</div></div>
+</div>
 
 <div class="victory-overlay" id="victory">
   <div class="victory-title">Victory!</div>
@@ -311,14 +372,27 @@
   let seconds = 0;
   let locked = false;
 
-  // Best scores per difficulty (in-memory only)
-  const bestScores = { easy: null, hard: null };
+  // Top 10 leaderboard per difficulty (localStorage)
+  function loadLeaderboard() {
+    try { return JSON.parse(localStorage.getItem('memory_leaderboard')) || { easy: [], hard: [] }; }
+    catch { return { easy: [], hard: [] }; }
+  }
+  function saveLeaderboard(lb) {
+    localStorage.setItem('memory_leaderboard', JSON.stringify(lb));
+  }
+
+  const playerNameInput = document.getElementById('playerName');
+  // Restore last used name
+  playerNameInput.value = localStorage.getItem('memory_playerName') || '';
+  playerNameInput.addEventListener('input', () => {
+    localStorage.setItem('memory_playerName', playerNameInput.value);
+  });
 
   const grid = document.getElementById('grid');
   const movesEl = document.getElementById('moves');
   const pairsEl = document.getElementById('pairs');
   const timerEl = document.getElementById('timer');
-  const bestScoreEl = document.getElementById('bestScore');
+  const lbBody = document.getElementById('lbBody');
   const victoryOverlay = document.getElementById('victory');
   const victoryStats = document.getElementById('victoryStats');
   const victoryBest = document.getElementById('victoryBest');
@@ -347,13 +421,43 @@
     return m + ':' + (sec < 10 ? '0' : '') + sec;
   }
 
-  function updateBestDisplay() {
-    const b = bestScores[difficulty];
-    if (b) {
-      bestScoreEl.innerHTML = 'Best: <span>' + b.moves + ' moves</span> in <span>' + formatTime(b.time) + '</span>';
-    } else {
-      bestScoreEl.textContent = '';
+  function renderLeaderboard(highlightIdx) {
+    const lb = loadLeaderboard();
+    const scores = lb[difficulty] || [];
+    if (scores.length === 0) {
+      lbBody.innerHTML = '<div class="leaderboard-empty">No scores yet — be the first!</div>';
+      return;
     }
+    lbBody.innerHTML = scores.map((s, i) => {
+      const cls = i === highlightIdx ? ' lb-new' : '';
+      return '<div class="lb-row' + cls + '">' +
+        '<span class="lb-rank">' + (i + 1) + '</span>' +
+        '<span class="lb-name">' + escHtml(s.name) + '</span>' +
+        '<span class="lb-moves">' + s.moves + ' moves</span>' +
+        '<span class="lb-time">' + formatTime(s.time) + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function addScore(name, moves, time) {
+    const lb = loadLeaderboard();
+    if (!lb[difficulty]) lb[difficulty] = [];
+    const entry = { name: name || 'Anonymous', moves, time, date: Date.now() };
+    lb[difficulty].push(entry);
+    // Sort: first by time (asc), then by moves (asc)
+    lb[difficulty].sort((a, b) => a.time - b.time || a.moves - b.moves);
+    // Keep only top 10
+    lb[difficulty] = lb[difficulty].slice(0, 10);
+    saveLeaderboard(lb);
+    // Find position of this entry
+    const idx = lb[difficulty].findIndex(e => e.date === entry.date);
+    return idx; // -1 if not in top 10
   }
 
   function newGame() {
@@ -369,7 +473,7 @@
     movesEl.textContent = '0';
     pairsEl.textContent = '0 / ' + totalPairs;
     timerEl.textContent = '0:00';
-    updateBestDisplay();
+    renderLeaderboard(-1);
 
     // Pick pieces
     const pieces = ALL_PIECES.slice(0, totalPairs);
@@ -450,24 +554,27 @@
   }
 
   function showVictory() {
-    // Check best score
-    const current = { moves, time: seconds };
-    const prev = bestScores[difficulty];
-    let isNewBest = false;
-    if (!prev || seconds < prev.time || (seconds === prev.time && moves < prev.moves)) {
-      bestScores[difficulty] = current;
-      isNewBest = true;
-    }
+    const name = playerNameInput.value.trim() || 'Anonymous';
+    const idx = addScore(name, moves, seconds);
+    const isTop10 = idx >= 0;
 
     victoryStats.innerHTML =
+      '<p>Player: <span>' + escHtml(name) + '</span></p>' +
       '<p>Moves: <span>' + moves + '</span></p>' +
       '<p>Time: <span>' + formatTime(seconds) + '</span></p>' +
       '<p>Pairs: <span>' + totalPairs + '</span></p>';
 
-    victoryBest.textContent = isNewBest ? 'New Best Score!' : '';
+    if (isTop10 && idx === 0) {
+      victoryBest.textContent = '🥇 New #1 Score!';
+    } else if (isTop10) {
+      victoryBest.textContent = '🏆 Top 10 — Rank #' + (idx + 1) + '!';
+    } else {
+      victoryBest.textContent = '';
+    }
+
     victoryOverlay.classList.add('show');
     launchConfetti();
-    updateBestDisplay();
+    renderLeaderboard(idx);
   }
 
   function closeVictory() {
