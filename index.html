@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Royal Tic-Tac-Toe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root {
+      --pink: #ec4899;
+      --pink-light: #f9a8d4;
+      --purple: #a855f7;
+      --purple-deep: #7c3aed;
+      --bg-dark: #0f0a1a;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.08);
+      --text: #f0e6ff;
+      --text-muted: #a78bcc;
+      --glow-pink: rgba(236,72,153,0.35);
+      --glow-purple: rgba(168,85,247,0.35);
+      --king-color: #c084fc;
+      --queen-color: #f472b6;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-dark);
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(168,85,247,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(236,72,153,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(124,58,237,0.06) 0%, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      padding: 2rem 1rem 0.5rem;
+    }
+    .header h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--pink-light), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      padding: 0.5rem 1.2rem;
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
+    }
+    .btn:hover { background: var(--bg-card-hover); border-color: var(--purple); }
+    .btn.active {
+      background: linear-gradient(135deg, var(--purple-deep), var(--pink));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 0 20px var(--glow-purple);
+    }
+    .btn-reset {
+      background: linear-gradient(135deg, var(--pink), var(--purple-deep));
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 20px var(--glow-pink);
+    }
+    .btn-reset:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ── Scoreboard ── */
+    .scoreboard {
+      display: flex;
+      gap: 1rem;
+      margin: 0.75rem 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .score-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      min-width: 100px;
+    }
+    .score-card.king {
+      border-color: rgba(192,132,252,0.25);
+      box-shadow: 0 0 16px rgba(192,132,252,0.1);
+    }
+    .score-card.queen {
+      border-color: rgba(244,114,182,0.25);
+      box-shadow: 0 0 16px rgba(244,114,182,0.1);
+    }
+    .score-card.draws {
+      border-color: rgba(255,255,255,0.1);
+    }
+    .score-card .piece {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+    .score-card .label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    .score-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-top: 0.15rem;
+    }
+    .score-card.king .value { color: var(--king-color); }
+    .score-card.queen .value { color: var(--queen-color); }
+    .score-card.draws .value { color: var(--text-muted); }
+
+    /* ── Turn Indicator ── */
+    .turn-indicator {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 500;
+      margin: 0.5rem 0;
+      min-height: 1.8rem;
+      transition: all 0.3s;
+    }
+    .turn-indicator .piece-inline {
+      font-size: 1.2rem;
+      vertical-align: middle;
+    }
+    .turn-indicator.king-turn { color: var(--king-color); }
+    .turn-indicator.queen-turn { color: var(--queen-color); }
+    .turn-indicator.game-over {
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--pink-light), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── 3D Board ── */
+    .board-wrapper {
+      perspective: 900px;
+      margin: 0.5rem 0 2rem;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      width: 320px;
+      height: 320px;
+      padding: 10px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(168,85,247,0.12), rgba(236,72,153,0.08));
+      border: 1px solid rgba(168,85,247,0.2);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.4),
+        0 0 40px var(--glow-purple),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      transform: rotateX(8deg) rotateY(-3deg);
+      transform-style: preserve-3d;
+      transition: transform 0.4s ease;
+    }
+    .board:hover {
+      transform: rotateX(4deg) rotateY(0deg);
+    }
+
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      font-size: 3rem;
+      line-height: 1;
+      transition: all 0.2s;
+      transform: translateZ(0px);
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .cell:hover:not(.taken) {
+      background: var(--bg-card-hover);
+      border-color: rgba(168,85,247,0.3);
+      transform: translateZ(8px) scale(1.03);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .cell:hover:not(.taken)::before {
+      opacity: 1;
+      background: radial-gradient(circle at center, rgba(168,85,247,0.08), transparent 70%);
+    }
+    .cell.taken { cursor: default; }
+
+    .cell.king {
+      color: var(--king-color);
+      text-shadow: 0 0 20px rgba(192,132,252,0.5);
+      animation: placeKing 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .cell.queen {
+      color: var(--queen-color);
+      text-shadow: 0 0 20px rgba(244,114,182,0.5);
+      animation: placeQueen 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .cell.win-cell {
+      animation: winPulse 0.8s ease-in-out infinite alternate;
+      border-color: rgba(255,255,255,0.3);
+    }
+    .cell.win-cell.king {
+      background: rgba(192,132,252,0.15);
+      box-shadow: 0 0 30px rgba(192,132,252,0.3);
+    }
+    .cell.win-cell.queen {
+      background: rgba(244,114,182,0.15);
+      box-shadow: 0 0 30px rgba(244,114,182,0.3);
+    }
+
+    @keyframes placeKing {
+      0% { transform: translateZ(30px) scale(0) rotate(-180deg); opacity: 0; }
+      100% { transform: translateZ(0) scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes placeQueen {
+      0% { transform: translateZ(30px) scale(0) rotate(180deg); opacity: 0; }
+      100% { transform: translateZ(0) scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes winPulse {
+      0% { transform: translateZ(0) scale(1); }
+      100% { transform: translateZ(12px) scale(1.06); }
+    }
+
+    /* ── AI thinking indicator ── */
+    .ai-thinking {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    .ai-thinking.visible { display: flex; justify-content: center; }
+    .ai-thinking .dots span {
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--purple);
+      animation: dotBounce 1.2s infinite;
+      margin: 0 2px;
+    }
+    .ai-thinking .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-thinking .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBounce {
+      0%,80%,100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 400px) {
+      .board { width: 280px; height: 280px; }
+      .cell { font-size: 2.4rem; }
+      .header h1 { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Royal Tic-Tac-Toe</h1>
+    <p>King vs Queen</p>
+  </div>
+
+  <div class="controls">
+    <button class="btn active" id="btn-pvp" onclick="setMode('pvp')">Player vs Player</button>
+    <button class="btn" id="btn-ai" onclick="setMode('ai')">Player vs AI</button>
+    <button class="btn btn-reset" onclick="resetGame()">New Game</button>
+    <button class="btn" onclick="resetScores()">Reset Scores</button>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-card king">
+      <span class="piece">&#9818;</span>
+      <span class="label">King</span>
+      <span class="value" id="score-king">0</span>
+    </div>
+    <div class="score-card draws">
+      <span class="piece">&#9868;</span>
+      <span class="label">Draws</span>
+      <span class="value" id="score-draws">0</span>
+    </div>
+    <div class="score-card queen">
+      <span class="piece">&#9819;</span>
+      <span class="label">Queen</span>
+      <span class="value" id="score-queen">0</span>
+    </div>
+  </div>
+
+  <div class="turn-indicator king-turn" id="turn">
+    <span class="piece-inline">&#9818;</span> King's turn
+  </div>
+  <div class="ai-thinking" id="ai-thinking">
+    AI thinking <span class="dots"><span></span><span></span><span></span></span>
+  </div>
+
+  <div class="board-wrapper">
+    <div class="board" id="board"></div>
+  </div>
+
+<script>
+// ── State ──
+const KING = 'king';   // ♚
+const QUEEN = 'queen'; // ♛
+const KING_CHAR = '\u2654';
+const QUEEN_CHAR = '\u2655';
+
+let board = Array(9).fill(null);
+let currentPlayer = KING;
+let gameOver = false;
+let mode = 'pvp'; // 'pvp' or 'ai'
+let scores = { king: 0, queen: 0, draws: 0 };
+
+const WIN_LINES = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6],
+];
+
+// ── DOM ──
+const boardEl = document.getElementById('board');
+const turnEl = document.getElementById('turn');
+const aiThinkingEl = document.getElementById('ai-thinking');
+
+function renderBoard() {
+  boardEl.innerHTML = '';
+  board.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (val ? ` taken ${val}` : '');
+    cell.textContent = val === KING ? KING_CHAR : val === QUEEN ? QUEEN_CHAR : '';
+    cell.addEventListener('click', () => handleClick(i));
+    boardEl.appendChild(cell);
+  });
+}
+
+function handleClick(i) {
+  if (board[i] || gameOver) return;
+  if (mode === 'ai' && currentPlayer === QUEEN) return; // AI's turn
+
+  makeMove(i);
+
+  if (!gameOver && mode === 'ai' && currentPlayer === QUEEN) {
+    aiThinkingEl.classList.add('visible');
+    setTimeout(() => {
+      const aiMove = getBestMove();
+      aiThinkingEl.classList.remove('visible');
+      if (aiMove !== -1) makeMove(aiMove);
+    }, 400 + Math.random() * 300);
+  }
+}
+
+function makeMove(i) {
+  board[i] = currentPlayer;
+  renderBoard();
+
+  const winLine = checkWin(currentPlayer);
+  if (winLine) {
+    gameOver = true;
+    highlightWin(winLine);
+    scores[currentPlayer]++;
+    updateScores();
+    const name = currentPlayer === KING ? 'King' : 'Queen';
+    const char = currentPlayer === KING ? KING_CHAR : QUEEN_CHAR;
+    turnEl.className = 'turn-indicator game-over';
+    turnEl.innerHTML = `${char} ${name} wins!`;
+    return;
+  }
+
+  if (board.every(c => c !== null)) {
+    gameOver = true;
+    scores.draws++;
+    updateScores();
+    turnEl.className = 'turn-indicator game-over';
+    turnEl.textContent = "It's a draw!";
+    return;
+  }
+
+  currentPlayer = currentPlayer === KING ? QUEEN : KING;
+  updateTurnIndicator();
+}
+
+function checkWin(player) {
+  for (const line of WIN_LINES) {
+    if (line.every(i => board[i] === player)) return line;
+  }
+  return null;
+}
+
+function highlightWin(line) {
+  const cells = boardEl.querySelectorAll('.cell');
+  line.forEach(i => cells[i].classList.add('win-cell'));
+}
+
+function updateTurnIndicator() {
+  const name = currentPlayer === KING ? 'King' : 'Queen';
+  const char = currentPlayer === KING ? KING_CHAR : QUEEN_CHAR;
+  turnEl.className = `turn-indicator ${currentPlayer}-turn`;
+  turnEl.innerHTML = `<span class="piece-inline">${char}</span> ${name}'s turn`;
+}
+
+function updateScores() {
+  document.getElementById('score-king').textContent = scores.king;
+  document.getElementById('score-queen').textContent = scores.queen;
+  document.getElementById('score-draws').textContent = scores.draws;
+}
+
+// ── AI (Minimax) ──
+function minimax(b, depth, isMax, alpha, beta) {
+  const aiWin = checkWinBoard(b, QUEEN);
+  const plWin = checkWinBoard(b, KING);
+  if (aiWin) return 10 - depth;
+  if (plWin) return depth - 10;
+  const empty = b.reduce((acc, v, i) => v === null ? [...acc, i] : acc, []);
+  if (empty.length === 0) return 0;
+
+  if (isMax) {
+    let best = -Infinity;
+    for (const i of empty) {
+      b[i] = QUEEN;
+      best = Math.max(best, minimax(b, depth + 1, false, alpha, beta));
+      b[i] = null;
+      alpha = Math.max(alpha, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const i of empty) {
+      b[i] = KING;
+      best = Math.min(best, minimax(b, depth + 1, true, alpha, beta));
+      b[i] = null;
+      beta = Math.min(beta, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function checkWinBoard(b, player) {
+  return WIN_LINES.some(line => line.every(i => b[i] === player));
+}
+
+function getBestMove() {
+  const empty = board.reduce((acc, v, i) => v === null ? [...acc, i] : acc, []);
+  if (empty.length === 0) return -1;
+
+  // Add slight randomness on first move for variety
+  if (empty.length === 9) {
+    const corners = [0, 2, 6, 8];
+    return corners[Math.floor(Math.random() * corners.length)];
+  }
+
+  let bestScore = -Infinity;
+  let bestMove = empty[0];
+  for (const i of empty) {
+    board[i] = QUEEN;
+    const score = minimax(board, 0, false, -Infinity, Infinity);
+    board[i] = null;
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = i;
+    }
+  }
+  return bestMove;
+}
+
+// ── Controls ──
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-pvp').className = 'btn' + (m === 'pvp' ? ' active' : '');
+  document.getElementById('btn-ai').className = 'btn' + (m === 'ai' ? ' active' : '');
+  resetGame();
+}
+
+function resetGame() {
+  board = Array(9).fill(null);
+  currentPlayer = KING;
+  gameOver = false;
+  aiThinkingEl.classList.remove('visible');
+  renderBoard();
+  updateTurnIndicator();
+}
+
+function resetScores() {
+  scores = { king: 0, queen: 0, draws: 0 };
+  updateScores();
+  resetGame();
+}
+
+// ── Init ──
+renderBoard();
+updateTurnIndicator();
+</script>
+
+</body>
+</html>
