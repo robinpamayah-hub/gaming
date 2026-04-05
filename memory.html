@@ -147,12 +147,12 @@
       border: 1px solid rgba(255,255,255,0.08);
     }
     .card-back {
-      background: linear-gradient(135deg, #1e1533, #2a1a42);
+      background: linear-gradient(135deg, #3b2667, #4b3280);
       font-size: 2rem;
-      color: rgba(236,72,153,0.6);
-      text-shadow: 0 0 12px rgba(236,72,153,0.3);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 0 30px rgba(168,85,247,0.08);
-      border: 1px solid rgba(168,85,247,0.3);
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 0 14px rgba(236,72,153,0.5);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      border: 1px solid rgba(168,85,247,0.5);
     }
     .card-back::after {
       content: '\265A';
@@ -160,9 +160,10 @@
     }
     .card-front {
       transform: rotateY(180deg);
-      background: rgba(255,255,255,0.95);
       font-size: 2.5rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      color: #1a1a2e;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
     }
     .grid.hard .card-front { font-size: 1.8rem; }
     .grid.hard .card-back { font-size: 1.4rem; }
@@ -279,24 +280,24 @@
 <script>
   // Chess pieces with tint colors
   const ALL_PIECES = [
-    { symbol: '\u2654', color: '#fef3c7' }, // ♔ warm gold
-    { symbol: '\u2655', color: '#fce7f3' }, // ♕ pink tint
-    { symbol: '\u2656', color: '#dbeafe' }, // ♖ blue tint
-    { symbol: '\u2657', color: '#d1fae5' }, // ♗ green tint
-    { symbol: '\u2658', color: '#ede9fe' }, // ♘ violet tint
-    { symbol: '\u2659', color: '#fff7ed' }, // ♙ orange tint
-    { symbol: '\u265A', color: '#fef9c3' }, // ♚ yellow
-    { symbol: '\u265B', color: '#fae8ff' }, // ♛ magenta tint
-    { symbol: '\u265C', color: '#e0f2fe' }, // ♜ sky tint
-    { symbol: '\u265D', color: '#dcfce7' }, // ♝ emerald tint
-    { symbol: '\u265E', color: '#f3e8ff' }, // ♞ purple tint
-    { symbol: '\u265F', color: '#fef2f2' }, // ♟ red tint
-    { symbol: '\u2654', color: '#e0e7ff' }, // extra pair variants
-    { symbol: '\u2655', color: '#ccfbf1' },
-    { symbol: '\u2656', color: '#fefce8' },
-    { symbol: '\u2657', color: '#ffe4e6' },
-    { symbol: '\u2658', color: '#f0fdf4' },
-    { symbol: '\u2659', color: '#eef2ff' },
+    { symbol: '\u2654', color: '#fbbf24' }, // ♔ gold
+    { symbol: '\u2655', color: '#f472b6' }, // ♕ pink
+    { symbol: '\u2656', color: '#60a5fa' }, // ♖ blue
+    { symbol: '\u2657', color: '#34d399' }, // ♗ green
+    { symbol: '\u2658', color: '#a78bfa' }, // ♘ violet
+    { symbol: '\u2659', color: '#fb923c' }, // ♙ orange
+    { symbol: '\u265A', color: '#facc15' }, // ♚ yellow
+    { symbol: '\u265B', color: '#e879f9' }, // ♛ magenta
+    { symbol: '\u265C', color: '#38bdf8' }, // ♜ sky blue
+    { symbol: '\u265D', color: '#4ade80' }, // ♝ emerald
+    { symbol: '\u265E', color: '#c084fc' }, // ♞ purple
+    { symbol: '\u265F', color: '#f87171' }, // ♟ red
+    { symbol: '\u2654', color: '#818cf8' }, // extra pair variants
+    { symbol: '\u2655', color: '#2dd4bf' },
+    { symbol: '\u2656', color: '#fcd34d' },
+    { symbol: '\u2657', color: '#fb7185' },
+    { symbol: '\u2658', color: '#6ee7b7' },
+    { symbol: '\u2659', color: '#93c5fd' },
   ];
 
   let difficulty = 'easy';
