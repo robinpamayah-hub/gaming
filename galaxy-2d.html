@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Galaxy of Leadership — 2D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050404;
+      --gold: #d4a847;
+      --gold-bright: #f0d785;
+      --text: #ebe1c8;
+      --text-muted: #8c7a52;
+      --border: rgba(212, 168, 71, 0.18);
+    }
+    html, body { width:100%; height:100%; overflow:hidden; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 50% 50%, rgba(232, 179, 57, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 80%, rgba(120, 80, 30, 0.05) 0%, transparent 50%);
+      color: var(--text);
+    }
+    #galaxy {
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      display: block;
+      cursor: default;
+    }
+    .grid {
+      position: fixed; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(212,168,71,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,168,71,0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+      z-index: 1;
+    }
+    .hud { position: fixed; z-index: 10; pointer-events: none; }
+    .hud > * { pointer-events: auto; }
+
+    .header { top: 1.5rem; left: 50%; transform: translateX(-50%); text-align: center; }
+    .star-icon {
+      display:inline-block; font-size:1.5rem; color:var(--gold-bright);
+      filter: drop-shadow(0 0 12px rgba(232, 179, 57, 0.6));
+      margin-bottom: 0.4rem;
+      animation: starPulse 4s ease-in-out infinite;
+    }
+    @keyframes starPulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .eyebrow { font-size:0.65rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--gold); font-weight:500; margin-bottom:0.5rem; }
+    h1 { font-family:'Cormorant Garamond',serif; font-weight:500; font-style:italic; font-size:clamp(1.6rem,3.2vw,2.6rem); }
+    h1 em { color:var(--gold-bright); }
+    .tagline { margin-top:0.5rem; font-size:0.8rem; color:var(--text-muted); font-weight:300; }
+    .mode-link {
+      display: inline-block; margin-top: 0.6rem;
+      font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase;
+      color:var(--text-muted); text-decoration:none;
+      border-bottom: 1px solid transparent; padding-bottom: 2px;
+    }
+    .mode-link:hover { color:var(--gold-bright); border-color:var(--gold); }
+
+    .chair-panel {
+      position: fixed; top: 1.5rem; right: 1.5rem;
+      padding: 0.85rem 1.1rem;
+      background: rgba(15,10,5,0.6);
+      border: 1px solid var(--border); border-radius: 12px;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      min-width: 220px;
+    }
+    .chair-panel .label { font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; font-weight:500; }
+    .chair-panel select {
+      width:100%; background:transparent; border:none; color:var(--gold-bright);
+      font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:600;
+      cursor:pointer; outline:none; appearance:none; -webkit-appearance:none;
+      padding-right:1.5rem;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23d4a847' d='M6 8L0 0h12z'/></svg>");
+      background-repeat:no-repeat; background-position:right center;
+    }
+    .chair-panel select option { background:#1a1208; color:var(--text); }
+
+    .legend {
+      position: fixed; bottom: 1.5rem; left: 1.5rem;
+      padding: 1rem 1.2rem;
+      background: rgba(15,10,5,0.6);
+      border: 1px solid var(--border); border-radius: 12px;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      max-width: 260px;
+    }
+    .legend .label { font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); margin-bottom:0.75rem; font-weight:500; }
+    .legend-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.35rem 0.75rem; }
+    .legend-item {
+      display:flex; align-items:center; gap:0.4rem;
+      font-size:0.72rem; color:var(--text); cursor:pointer;
+      opacity:0.75; transition:opacity 0.2s; user-select:none;
+    }
+    .legend-item:hover { opacity:1; }
+    .legend-item.active { opacity:1; color:var(--gold-bright); }
+    .legend-item.muted { opacity:0.25; }
+    .legend-dot { width:8px; height:8px; border-radius:50%; box-shadow:0 0 8px currentColor; }
+
+    .reset-btn {
+      position: fixed; top: 1.5rem; left: 1.5rem;
+      padding: 0.5rem 0.9rem;
+      background: rgba(15,10,5,0.6);
+      border: 1px solid var(--border); border-radius: 999px;
+      color: var(--text-muted);
+      font-family:'Outfit',sans-serif; font-size:0.72rem; font-weight:500;
+      letter-spacing:0.1em; text-transform:uppercase;
+      cursor:pointer; backdrop-filter:blur(14px); text-decoration:none;
+      transition: all 0.2s;
+    }
+    .reset-btn:hover { color:var(--gold-bright); border-color:var(--gold); }
+
+    .tooltip {
+      position: fixed; z-index: 20; pointer-events: none;
+      padding: 0.7rem 0.9rem;
+      background: rgba(20,14,6,0.92);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(232,179,57,0.2);
+      opacity:0; transition:opacity 0.15s;
+      max-width: 260px;
+    }
+    .tooltip.show { opacity: 1; }
+    .tt-title { font-family:'Cormorant Garamond',serif; font-size:1.05rem; color:var(--gold-bright); font-weight:600; line-height:1.2; }
+    .tt-author { font-size:0.75rem; color:var(--text); margin-top:0.2rem; }
+    .tt-meta { font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-muted); margin-top:0.5rem; }
+
+    .detail-panel {
+      position: fixed; left: 50%; bottom: -200%;
+      transform: translateX(-50%);
+      width: min(560px, calc(100vw - 3rem));
+      padding: 1.5rem 1.75rem;
+      background: rgba(15,10,5,0.92);
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(232,179,57,0.15);
+      transition: bottom 0.4s cubic-bezier(0.16,1,0.3,1);
+      z-index: 15;
+    }
+    .detail-panel.open { bottom: 7rem; }
+    .detail-close {
+      position: absolute; top: 0.75rem; right: 0.9rem;
+      background:none; border:none; color:var(--text-muted);
+      cursor:pointer; font-size:1.2rem; line-height:1;
+    }
+    .detail-close:hover { color:var(--gold-bright); }
+    .detail-eyebrow { font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--gold); font-weight:500; }
+    .detail-title { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold-bright); font-weight:600; line-height:1.1; margin-top:0.4rem; }
+    .detail-author { font-size:0.9rem; color:var(--text); margin-top:0.3rem; font-style:italic; }
+    .detail-rows { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.2rem; padding-top:1.2rem; border-top:1px solid var(--border); }
+    .detail-row .k { font-size:0.55rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.3rem; }
+    .detail-row .v { font-size:0.85rem; color:var(--text); display:flex; align-items:center; gap:0.5rem; }
+    .detail-row .v .legend-dot { width:9px; height:9px; }
+
+    @media (max-width: 720px) {
+      .header { top: 4rem; }
+      .chair-panel { top: 0.75rem; right: 0.75rem; min-width: 160px; padding:0.6rem 0.8rem; }
+      .legend { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; max-width: none; }
+      .reset-btn { top: 0.75rem; left: 0.75rem; }
+      .detail-panel.open { bottom: 12rem; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="galaxy"></canvas>
+  <div class="grid"></div>
+
+  <div class="hud">
+    <a class="reset-btn" href="index.html">&larr; Back</a>
+    <div class="header">
+      <div class="star-icon">&#10022;</div>
+      <div class="eyebrow">Leadership Mastery</div>
+      <h1>The <em>Galaxy</em> of Leadership</h1>
+      <div class="tagline">2D view · 100+ books · 12 themes · 6 chairs</div>
+      <a href="galaxy.html" class="mode-link">&larr; View 3D</a>
+    </div>
+    <div class="chair-panel">
+      <div class="label">Your Chair</div>
+      <select id="chair-select">
+        <option value="-1">All Phases</option>
+        <option value="0">Individual Contributor</option>
+        <option value="1">Team Lead</option>
+        <option value="2">Manager</option>
+        <option value="3">Director</option>
+        <option value="4">VP / Senior Leader</option>
+        <option value="5">CEO / C-Suite</option>
+      </select>
+    </div>
+    <div class="legend">
+      <div class="label">12 Themes</div>
+      <div class="legend-grid" id="legend-grid"></div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip">
+    <div class="tt-title"></div>
+    <div class="tt-author"></div>
+    <div class="tt-meta"></div>
+  </div>
+
+  <div class="detail-panel" id="detail">
+    <button class="detail-close" id="detail-close">&times;</button>
+    <div class="detail-eyebrow">From the library</div>
+    <div class="detail-title" id="d-title"></div>
+    <div class="detail-author" id="d-author"></div>
+    <div class="detail-rows">
+      <div class="detail-row">
+        <div class="k">Theme</div>
+        <div class="v" id="d-theme"></div>
+      </div>
+      <div class="detail-row">
+        <div class="k">Most relevant at</div>
+        <div class="v" id="d-phase"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ========== DATA (shared with 3D) ========== */
+    const THEMES = [
+      { n:"Vision & Strategy", c:"#e8b339" },
+      { n:"Communication", c:"#c97e58" },
+      { n:"Decision Making", c:"#8fa9c4" },
+      { n:"Emotional Intelligence", c:"#d96b7e" },
+      { n:"Team Building", c:"#a8c896" },
+      { n:"Culture & Values", c:"#b89dc7" },
+      { n:"Coaching & Mentoring", c:"#7fb8b2" },
+      { n:"Change Management", c:"#e89856" },
+      { n:"Influence & Negotiation", c:"#9a7fc4" },
+      { n:"Execution", c:"#d4a847" },
+      { n:"Innovation", c:"#6fc4ad" },
+      { n:"Personal Mastery", c:"#f0d785" },
+    ];
+    const PHASES = ["Individual Contributor","Team Lead","Manager","Director","VP / Senior Leader","CEO / C-Suite"];
+    const BOOKS = [
+      {t:"Good to Great",a:"Jim Collins",th:0,ph:4},
+      {t:"Built to Last",a:"Jim Collins",th:0,ph:5},
+      {t:"Blue Ocean Strategy",a:"Kim & Mauborgne",th:0,ph:4},
+      {t:"The Innovator's Dilemma",a:"Clayton Christensen",th:0,ph:4},
+      {t:"Playing to Win",a:"Lafley & Martin",th:0,ph:5},
+      {t:"Start With Why",a:"Simon Sinek",th:0,ph:2},
+      {t:"Good Strategy Bad Strategy",a:"Richard Rumelt",th:0,ph:3},
+      {t:"7 Powers",a:"Hamilton Helmer",th:0,ph:5},
+      {t:"Hit Refresh",a:"Satya Nadella",th:0,ph:5},
+      {t:"Only the Paranoid Survive",a:"Andy Grove",th:0,ph:5},
+      {t:"Crucial Conversations",a:"Patterson et al",th:1,ph:1},
+      {t:"Never Split the Difference",a:"Chris Voss",th:1,ph:2},
+      {t:"How to Win Friends & Influence People",a:"Dale Carnegie",th:1,ph:0},
+      {t:"Made to Stick",a:"Chip & Dan Heath",th:1,ph:2},
+      {t:"Talk Like TED",a:"Carmine Gallo",th:1,ph:2},
+      {t:"Radical Candor",a:"Kim Scott",th:1,ph:2},
+      {t:"Nonviolent Communication",a:"Marshall Rosenberg",th:1,ph:1},
+      {t:"Difficult Conversations",a:"Stone, Patton, Heen",th:1,ph:2},
+      {t:"Resonate",a:"Nancy Duarte",th:1,ph:3},
+      {t:"Thinking, Fast and Slow",a:"Daniel Kahneman",th:2,ph:3},
+      {t:"Decisive",a:"Chip & Dan Heath",th:2,ph:2},
+      {t:"Smart Choices",a:"Hammond et al",th:2,ph:2},
+      {t:"Predictably Irrational",a:"Dan Ariely",th:2,ph:2},
+      {t:"Noise",a:"Kahneman, Sibony, Sunstein",th:2,ph:4},
+      {t:"Black Box Thinking",a:"Matthew Syed",th:2,ph:3},
+      {t:"Superforecasting",a:"Tetlock & Gardner",th:2,ph:4},
+      {t:"The Paradox of Choice",a:"Barry Schwartz",th:2,ph:1},
+      {t:"Emotional Intelligence",a:"Daniel Goleman",th:3,ph:1},
+      {t:"Primal Leadership",a:"Goleman, Boyatzis, McKee",th:3,ph:3},
+      {t:"Search Inside Yourself",a:"Chade-Meng Tan",th:3,ph:1},
+      {t:"Daring Greatly",a:"Brené Brown",th:3,ph:2},
+      {t:"Dare to Lead",a:"Brené Brown",th:3,ph:3},
+      {t:"Rising Strong",a:"Brené Brown",th:3,ph:2},
+      {t:"Permission to Feel",a:"Marc Brackett",th:3,ph:2},
+      {t:"The Gifts of Imperfection",a:"Brené Brown",th:3,ph:1},
+      {t:"The Five Dysfunctions of a Team",a:"Patrick Lencioni",th:4,ph:2},
+      {t:"The Ideal Team Player",a:"Patrick Lencioni",th:4,ph:1},
+      {t:"Team of Teams",a:"Stanley McChrystal",th:4,ph:4},
+      {t:"Multipliers",a:"Liz Wiseman",th:4,ph:3},
+      {t:"Tribes",a:"Seth Godin",th:4,ph:2},
+      {t:"The Wisdom of Teams",a:"Katzenbach & Smith",th:4,ph:2},
+      {t:"Turn the Ship Around!",a:"L. David Marquet",th:4,ph:3},
+      {t:"Crucial Accountability",a:"Patterson et al",th:4,ph:3},
+      {t:"The Culture Code",a:"Daniel Coyle",th:5,ph:3},
+      {t:"Delivering Happiness",a:"Tony Hsieh",th:5,ph:5},
+      {t:"No Rules Rules",a:"Hastings & Meyer",th:5,ph:5},
+      {t:"Powerful",a:"Patty McCord",th:5,ph:4},
+      {t:"Reinventing Organizations",a:"Frederic Laloux",th:5,ph:5},
+      {t:"Drive",a:"Daniel Pink",th:5,ph:2},
+      {t:"The Advantage",a:"Patrick Lencioni",th:5,ph:4},
+      {t:"Tribal Leadership",a:"Logan, King, Fischer-Wright",th:5,ph:3},
+      {t:"The Coaching Habit",a:"Michael Bungay Stanier",th:6,ph:2},
+      {t:"Trillion Dollar Coach",a:"Schmidt, Rosenberg, Eagle",th:6,ph:5},
+      {t:"The Inner Game of Work",a:"Tim Gallwey",th:6,ph:2},
+      {t:"Helping People Change",a:"Boyatzis, Smith, Van Oosten",th:6,ph:3},
+      {t:"Coaching for Performance",a:"John Whitmore",th:6,ph:2},
+      {t:"The Advice Trap",a:"Michael Bungay Stanier",th:6,ph:3},
+      {t:"Leading Change",a:"John Kotter",th:7,ph:4},
+      {t:"Switch",a:"Chip & Dan Heath",th:7,ph:2},
+      {t:"Who Moved My Cheese?",a:"Spencer Johnson",th:7,ph:0},
+      {t:"The Heart of Change",a:"Kotter & Cohen",th:7,ph:3},
+      {t:"Immunity to Change",a:"Kegan & Lahey",th:7,ph:3},
+      {t:"Antifragile",a:"Nassim Taleb",th:7,ph:4},
+      {t:"Our Iceberg Is Melting",a:"John Kotter",th:7,ph:2},
+      {t:"Influence",a:"Robert Cialdini",th:8,ph:2},
+      {t:"Pre-Suasion",a:"Robert Cialdini",th:8,ph:3},
+      {t:"Getting to Yes",a:"Fisher & Ury",th:8,ph:2},
+      {t:"Power",a:"Jeffrey Pfeffer",th:8,ph:3},
+      {t:"7 Rules of Power",a:"Jeffrey Pfeffer",th:8,ph:4},
+      {t:"The 48 Laws of Power",a:"Robert Greene",th:8,ph:3},
+      {t:"Yes!",a:"Goldstein, Martin, Cialdini",th:8,ph:2},
+      {t:"The 4 Disciplines of Execution",a:"McChesney et al",th:9,ph:3},
+      {t:"Execution",a:"Bossidy & Charan",th:9,ph:4},
+      {t:"High Output Management",a:"Andy Grove",th:9,ph:2},
+      {t:"Measure What Matters",a:"John Doerr",th:9,ph:3},
+      {t:"The Hard Thing About Hard Things",a:"Ben Horowitz",th:9,ph:5},
+      {t:"Scaling Up",a:"Verne Harnish",th:9,ph:4},
+      {t:"Extreme Ownership",a:"Willink & Babin",th:9,ph:2},
+      {t:"The Effective Executive",a:"Peter Drucker",th:9,ph:3},
+      {t:"The Goal",a:"Eliyahu Goldratt",th:9,ph:2},
+      {t:"The Lean Startup",a:"Eric Ries",th:10,ph:2},
+      {t:"Zero to One",a:"Peter Thiel",th:10,ph:5},
+      {t:"Crossing the Chasm",a:"Geoffrey Moore",th:10,ph:4},
+      {t:"Loonshots",a:"Safi Bahcall",th:10,ph:4},
+      {t:"The Innovator's Solution",a:"Christensen & Raynor",th:10,ph:4},
+      {t:"Creativity, Inc.",a:"Ed Catmull",th:10,ph:5},
+      {t:"Sprint",a:"Jake Knapp",th:10,ph:2},
+      {t:"Originals",a:"Adam Grant",th:10,ph:2},
+      {t:"The Innovator's DNA",a:"Dyer, Gregersen, Christensen",th:10,ph:3},
+      {t:"The 7 Habits of Highly Effective People",a:"Stephen Covey",th:11,ph:0},
+      {t:"Atomic Habits",a:"James Clear",th:11,ph:0},
+      {t:"Deep Work",a:"Cal Newport",th:11,ph:1},
+      {t:"Mindset",a:"Carol Dweck",th:11,ph:0},
+      {t:"Grit",a:"Angela Duckworth",th:11,ph:0},
+      {t:"Man's Search for Meaning",a:"Viktor Frankl",th:11,ph:0},
+      {t:"Essentialism",a:"Greg McKeown",th:11,ph:1},
+      {t:"Meditations",a:"Marcus Aurelius",th:11,ph:1},
+      {t:"The Almanack of Naval Ravikant",a:"Eric Jorgenson",th:11,ph:1},
+      {t:"Range",a:"David Epstein",th:11,ph:2},
+      {t:"The War of Art",a:"Steven Pressfield",th:11,ph:0},
+      {t:"The Power of Now",a:"Eckhart Tolle",th:11,ph:1},
+      {t:"The Obstacle Is the Way",a:"Ryan Holiday",th:11,ph:1},
+      {t:"Ego Is the Enemy",a:"Ryan Holiday",th:11,ph:2},
+      {t:"Discipline Equals Freedom",a:"Jocko Willink",th:11,ph:1},
+    ];
+
+    /* ========== CANVAS SETUP ========== */
+    const canvas = document.getElementById('galaxy');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, CX = 0, CY = 0, DPR = 1;
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * DPR;
+      canvas.height = H * DPR;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      CX = W / 2; CY = H / 2;
+      layoutBooks();
+    }
+    window.addEventListener('resize', resize);
+
+    /* ========== LAYOUT ========== */
+    // 6 concentric phase rings; books placed by theme angle + jitter
+    const PHASE_RADIUS_RATIOS = [0.14, 0.22, 0.30, 0.38, 0.46, 0.54];
+    let phaseRadii = [];
+    function layoutBooks() {
+      const base = Math.min(W, H);
+      phaseRadii = PHASE_RADIUS_RATIOS.map(r => r * base);
+      const themeStep = (Math.PI * 2) / 12;
+      BOOKS.forEach((b, i) => {
+        const seed = (b.t.charCodeAt(0) * 13 + (b.t.charCodeAt(b.t.length - 1) || 0) * 7 + i * 5) % 1000;
+        const rnd = (n) => {
+          const x = Math.sin(seed + n) * 10000;
+          return x - Math.floor(x);
+        };
+        const baseAngle = b.th * themeStep - Math.PI / 2; // -PI/2 = top
+        const angleJ = (rnd(1) - 0.5) * themeStep * 0.85;
+        const radiusJ = (rnd(2) - 0.5) * (base * 0.025);
+        b._angle = baseAngle + angleJ;
+        b._r = phaseRadii[b.ph] + radiusJ;
+        b._tw = rnd(3) * Math.PI * 2; // twinkle phase
+      });
+    }
+
+    /* ========== LEGEND ========== */
+    const legendGrid = document.getElementById('legend-grid');
+    let activeChair = -1;
+    let activeThemes = new Set();
+    THEMES.forEach((t, i) => {
+      const el = document.createElement('div');
+      el.className = 'legend-item';
+      el.dataset.theme = i;
+      el.innerHTML = `<span class="legend-dot" style="background:${t.c};color:${t.c}"></span><span>${t.n}</span>`;
+      el.addEventListener('click', () => toggleTheme(i));
+      legendGrid.appendChild(el);
+    });
+    function toggleTheme(i) {
+      if (activeThemes.has(i)) activeThemes.delete(i); else activeThemes.add(i);
+      document.querySelectorAll('.legend-item').forEach(el => {
+        const idx = parseInt(el.dataset.theme, 10);
+        if (activeThemes.size === 0) el.classList.remove('active','muted');
+        else if (activeThemes.has(idx)) { el.classList.add('active'); el.classList.remove('muted'); }
+        else { el.classList.add('muted'); el.classList.remove('active'); }
+      });
+    }
+    document.getElementById('chair-select').addEventListener('change', (e) => {
+      activeChair = parseInt(e.target.value, 10);
+    });
+
+    function isActive(b) {
+      const chairOk = activeChair === -1 || b.ph === activeChair;
+      const themeOk = activeThemes.size === 0 || activeThemes.has(b.th);
+      return chairOk && themeOk;
+    }
+
+    /* ========== INTERACTION ========== */
+    let mouseX = -9999, mouseY = -9999;
+    let hovered = null;
+    let rotation = 0;
+    const tooltip = document.getElementById('tooltip');
+    const ttTitle = tooltip.querySelector('.tt-title');
+    const ttAuthor = tooltip.querySelector('.tt-author');
+    const ttMeta = tooltip.querySelector('.tt-meta');
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+      tooltip.style.left = (e.clientX + 16) + 'px';
+      tooltip.style.top = (e.clientY + 16) + 'px';
+    });
+    canvas.addEventListener('mouseleave', () => { mouseX = mouseY = -9999; });
+    canvas.addEventListener('click', () => {
+      if (hovered) selectBook(hovered);
+      else closeDetail();
+    });
+
+    const detail = document.getElementById('detail');
+    document.getElementById('detail-close').addEventListener('click', closeDetail);
+    function selectBook(b) {
+      document.getElementById('d-title').textContent = b.t;
+      document.getElementById('d-author').textContent = b.a;
+      document.getElementById('d-theme').innerHTML =
+        `<span class="legend-dot" style="background:${THEMES[b.th].c};color:${THEMES[b.th].c}"></span>${THEMES[b.th].n}`;
+      document.getElementById('d-phase').textContent = PHASES[b.ph];
+      detail.classList.add('open');
+    }
+    function closeDetail() { detail.classList.remove('open'); }
+
+    /* ========== BACKGROUND STARS ========== */
+    const bgStars = [];
+    for (let i = 0; i < 220; i++) {
+      bgStars.push({
+        x: Math.random(), y: Math.random(),
+        r: Math.random() * 1.3 + 0.2,
+        a: Math.random() * 0.5 + 0.15,
+        tw: Math.random() * Math.PI * 2,
+      });
+    }
+
+    /* ========== DRAW ========== */
+    function draw(time) {
+      const t = time * 0.001;
+      rotation = t * 0.04;
+
+      // Clear with subtle trail for motion
+      ctx.fillStyle = 'rgba(5, 4, 4, 1)';
+      ctx.fillRect(0, 0, W, H);
+
+      // Background stars
+      ctx.save();
+      bgStars.forEach(s => {
+        const tw = 0.6 + Math.sin(t * 1.5 + s.tw) * 0.4;
+        ctx.fillStyle = `rgba(245, 230, 190, ${s.a * tw})`;
+        ctx.beginPath();
+        ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      // Phase rings
+      phaseRadii.forEach((r, i) => {
+        const isActiveRing = activeChair === -1 || i === activeChair;
+        ctx.beginPath();
+        ctx.arc(CX, CY, r, 0, Math.PI * 2);
+        ctx.strokeStyle = isActiveRing
+          ? 'rgba(212, 168, 71, 0.45)'
+          : 'rgba(212, 168, 71, 0.08)';
+        ctx.lineWidth = isActiveRing && activeChair !== -1 ? 1.5 : 1;
+        ctx.stroke();
+
+        // Phase label (small, on the right side)
+        if (i === activeChair || activeChair === -1) {
+          ctx.font = "500 9px 'Outfit', sans-serif";
+          ctx.fillStyle = i === activeChair ? '#f0d785' : 'rgba(140, 122, 82, 0.7)';
+          ctx.textAlign = 'left';
+          ctx.fillText(PHASES[i].toUpperCase(), CX + r + 8, CY + 3);
+        }
+      });
+
+      // Theme sector guides (very subtle)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(212, 168, 71, 0.04)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 12; i++) {
+        const ang = (i / 12) * Math.PI * 2 - Math.PI / 2 - Math.PI / 12;
+        const outerR = phaseRadii[5] + 30;
+        ctx.beginPath();
+        ctx.moveTo(CX, CY);
+        ctx.lineTo(CX + Math.cos(ang) * outerR, CY + Math.sin(ang) * outerR);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Theme labels at outer edge
+      const labelR = phaseRadii[5] + 26;
+      ctx.font = "italic 500 11px 'Cormorant Garamond', serif";
+      THEMES.forEach((th, i) => {
+        const ang = (i / 12) * Math.PI * 2 - Math.PI / 2 + rotation;
+        const x = CX + Math.cos(ang) * labelR;
+        const y = CY + Math.sin(ang) * labelR;
+        const dimmed = activeThemes.size > 0 && !activeThemes.has(i);
+        ctx.fillStyle = dimmed ? 'rgba(140, 122, 82, 0.3)' : th.c;
+        ctx.globalAlpha = dimmed ? 0.4 : 0.85;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(th.n, x, y);
+        ctx.globalAlpha = 1;
+      });
+
+      // Core glow (layered)
+      const coreR = Math.min(W, H) * 0.05;
+      const pulse = 1 + Math.sin(t * 1.4) * 0.06;
+
+      // Outer halo
+      let grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, coreR * 6);
+      grad.addColorStop(0, 'rgba(232, 179, 57, 0.35)');
+      grad.addColorStop(0.4, 'rgba(212, 168, 71, 0.12)');
+      grad.addColorStop(1, 'rgba(212, 168, 71, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(CX, CY, coreR * 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner glow
+      grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, coreR * 2.5 * pulse);
+      grad.addColorStop(0, 'rgba(255, 240, 200, 1)');
+      grad.addColorStop(0.5, 'rgba(232, 179, 57, 0.55)');
+      grad.addColorStop(1, 'rgba(232, 179, 57, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(CX, CY, coreR * 2.5 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Core solid center
+      ctx.fillStyle = '#fff1c4';
+      ctx.beginPath();
+      ctx.arc(CX, CY, coreR * 0.5 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Core label
+      ctx.font = "italic 600 18px 'Cormorant Garamond', serif";
+      ctx.fillStyle = '#f0d785';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(232, 179, 57, 0.6)';
+      ctx.shadowBlur = 16;
+      ctx.fillText('Great Leadership', CX, CY + coreR * 1.8);
+      ctx.shadowBlur = 0;
+
+      // Books — find hover first
+      hovered = null;
+      let hoverDist = 14;
+      const drawList = [];
+      BOOKS.forEach(b => {
+        const ang = b._angle + rotation;
+        const x = CX + Math.cos(ang) * b._r;
+        const y = CY + Math.sin(ang) * b._r;
+        const active = isActive(b);
+        drawList.push({ b, x, y, active });
+        if (active) {
+          const dx = mouseX - x, dy = mouseY - y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < hoverDist) { hoverDist = d; hovered = b; b._hoverPos = { x, y }; }
+        }
+      });
+
+      // Draw inactive first (faded), then active, then hovered
+      drawList.forEach(({ b, x, y, active }) => {
+        if (active) return;
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = THEMES[b.th].c;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      drawList.forEach(({ b, x, y, active }) => {
+        if (!active) return;
+        const isHover = (b === hovered);
+        const tw = 0.85 + Math.sin(t * 2 + b._tw) * 0.15;
+        const r = (isHover ? 5 : 2.4) * tw;
+        const color = THEMES[b.th].c;
+
+        // Glow
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+        g.addColorStop(0, color + 'cc');
+        g.addColorStop(0.4, color + '44');
+        g.addColorStop(1, color + '00');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Core dot
+        ctx.fillStyle = isHover ? '#fff' : color;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Tooltip
+      if (hovered) {
+        ttTitle.textContent = hovered.t;
+        ttAuthor.textContent = hovered.a;
+        ttMeta.textContent = `${THEMES[hovered.th].n} · ${PHASES[hovered.ph]}`;
+        tooltip.classList.add('show');
+        canvas.style.cursor = 'pointer';
+      } else {
+        tooltip.classList.remove('show');
+        canvas.style.cursor = 'default';
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

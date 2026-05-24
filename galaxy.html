@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Galaxy of Leadership</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050404;
+      --gold: #d4a847;
+      --gold-bright: #f0d785;
+      --gold-soft: #b89668;
+      --text: #ebe1c8;
+      --text-muted: #8c7a52;
+      --border: rgba(212, 168, 71, 0.18);
+    }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 50% 50%, rgba(232, 179, 57, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 80%, rgba(120, 80, 30, 0.05) 0%, transparent 50%);
+      color: var(--text);
+    }
+    #galaxy {
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      display: block;
+      cursor: grab;
+    }
+    #galaxy:active { cursor: grabbing; }
+
+    /* Faint grid overlay */
+    .grid {
+      position: fixed; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(212,168,71,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,168,71,0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+      z-index: 1;
+    }
+
+    /* HUD */
+    .hud { position: fixed; z-index: 10; pointer-events: none; }
+    .hud > * { pointer-events: auto; }
+
+    .header {
+      top: 1.5rem; left: 50%; transform: translateX(-50%);
+      text-align: center;
+      width: max-content;
+    }
+    .star-icon {
+      display: inline-block; font-size: 1.5rem; color: var(--gold-bright);
+      filter: drop-shadow(0 0 12px rgba(232, 179, 57, 0.6));
+      margin-bottom: 0.4rem;
+      animation: starPulse 4s ease-in-out infinite;
+    }
+    @keyframes starPulse {
+      0%,100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(232, 179, 57, 0.6)); }
+      50%     { transform: scale(1.1); filter: drop-shadow(0 0 20px rgba(232, 179, 57, 0.9)); }
+    }
+    .eyebrow {
+      font-size: 0.65rem; letter-spacing: 0.4em; text-transform: uppercase;
+      color: var(--gold); font-weight: 500; margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 500; font-style: italic;
+      font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+      color: var(--text); line-height: 1.05;
+    }
+    h1 em { color: var(--gold-bright); font-style: italic; }
+    .tagline {
+      margin-top: 0.5rem; font-size: 0.8rem;
+      color: var(--text-muted); font-weight: 300;
+      letter-spacing: 0.02em;
+    }
+
+    /* Chair selector — top right */
+    .chair-panel {
+      position: fixed; top: 1.5rem; right: 1.5rem;
+      padding: 0.85rem 1.1rem;
+      background: rgba(15, 10, 5, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      min-width: 220px;
+    }
+    .chair-panel .label {
+      font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 0.5rem; font-weight: 500;
+    }
+    .chair-panel select {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--gold-bright);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 1.5rem;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23d4a847' d='M6 8L0 0h12z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right center;
+    }
+    .chair-panel select option { background: #1a1208; color: var(--text); }
+
+    /* Theme legend — bottom left */
+    .legend {
+      position: fixed; bottom: 1.5rem; left: 1.5rem;
+      padding: 1rem 1.2rem;
+      background: rgba(15, 10, 5, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      max-width: 260px;
+    }
+    .legend .label {
+      font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 0.75rem; font-weight: 500;
+    }
+    .legend-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 0.75rem;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.72rem; color: var(--text); cursor: pointer;
+      opacity: 0.75; transition: opacity 0.2s;
+      user-select: none;
+    }
+    .legend-item:hover { opacity: 1; }
+    .legend-item.active { opacity: 1; color: var(--gold-bright); }
+    .legend-item.muted { opacity: 0.25; }
+    .legend-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Stats — bottom right */
+    .stats {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      display: flex; gap: 1.5rem;
+      padding: 0.85rem 1.2rem;
+      background: rgba(15, 10, 5, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .stat { text-align: center; }
+    .stat .num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem; font-weight: 600; color: var(--gold-bright);
+      line-height: 1;
+    }
+    .stat .lbl {
+      font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text-muted); margin-top: 0.3rem;
+    }
+
+    /* Tooltip — follows cursor */
+    .tooltip {
+      position: fixed; z-index: 20; pointer-events: none;
+      padding: 0.7rem 0.9rem;
+      background: rgba(20, 14, 6, 0.92);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(232,179,57,0.2);
+      opacity: 0; transition: opacity 0.15s;
+      max-width: 260px;
+    }
+    .tooltip.show { opacity: 1; }
+    .tt-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem; color: var(--gold-bright); font-weight: 600;
+      line-height: 1.2;
+    }
+    .tt-author { font-size: 0.75rem; color: var(--text); margin-top: 0.2rem; }
+    .tt-meta {
+      font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--text-muted); margin-top: 0.5rem;
+    }
+
+    /* Detail panel — center bottom, opens on click */
+    .detail-panel {
+      position: fixed; left: 50%; bottom: -200%;
+      transform: translateX(-50%);
+      width: min(560px, calc(100vw - 3rem));
+      padding: 1.5rem 1.75rem;
+      background: rgba(15, 10, 5, 0.92);
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(232,179,57,0.15);
+      transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 15;
+    }
+    .detail-panel.open { bottom: 7rem; }
+    .detail-close {
+      position: absolute; top: 0.75rem; right: 0.9rem;
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 1.2rem; line-height: 1;
+      transition: color 0.2s;
+    }
+    .detail-close:hover { color: var(--gold-bright); }
+    .detail-eyebrow {
+      font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--gold); font-weight: 500;
+    }
+    .detail-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem; color: var(--gold-bright); font-weight: 600;
+      line-height: 1.1; margin-top: 0.4rem;
+    }
+    .detail-author {
+      font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;
+      font-style: italic;
+    }
+    .detail-rows {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      margin-top: 1.2rem; padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+    .detail-row .k {
+      font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 0.3rem;
+    }
+    .detail-row .v {
+      font-size: 0.85rem; color: var(--text);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .detail-row .v .legend-dot { width: 9px; height: 9px; }
+
+    /* Reset button — top left */
+    .reset-btn {
+      position: fixed; top: 1.5rem; left: 1.5rem;
+      padding: 0.5rem 0.9rem;
+      background: rgba(15, 10, 5, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .reset-btn:hover { color: var(--gold-bright); border-color: var(--gold); }
+
+    /* Mode toggle (link to 2D) */
+    .mode-link {
+      position: fixed; top: 1.5rem; left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--text-muted); text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: all 0.2s;
+    }
+    .mode-link:hover { color: var(--gold-bright); border-color: var(--gold); }
+
+    @media (max-width: 720px) {
+      .header { top: 4rem; }
+      .chair-panel { top: 0.75rem; right: 0.75rem; min-width: 160px; padding: 0.6rem 0.8rem; }
+      .legend { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; max-width: none; }
+      .stats { display: none; }
+      .reset-btn { top: 0.75rem; left: 0.75rem; }
+      .mode-link { transform: translateX(-50%) translateY(160px); }
+      .detail-panel.open { bottom: 12rem; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="galaxy"></canvas>
+  <div class="grid"></div>
+
+  <div class="hud">
+    <a class="reset-btn" href="index.html">&larr; Back</a>
+
+    <div class="header">
+      <div class="star-icon">&#10022;</div>
+      <div class="eyebrow">Leadership Mastery</div>
+      <h1>The <em>Galaxy</em> of Leadership</h1>
+      <div class="tagline">100+ books · 12 themes · 6 chairs to the top</div>
+      <a href="galaxy-2d.html" class="mode-link">View 2D &rarr;</a>
+    </div>
+
+    <div class="chair-panel">
+      <div class="label">Your Chair</div>
+      <select id="chair-select">
+        <option value="-1">All Phases</option>
+        <option value="0">Individual Contributor</option>
+        <option value="1">Team Lead</option>
+        <option value="2">Manager</option>
+        <option value="3">Director</option>
+        <option value="4">VP / Senior Leader</option>
+        <option value="5">CEO / C-Suite</option>
+      </select>
+    </div>
+
+    <div class="legend">
+      <div class="label">12 Themes</div>
+      <div class="legend-grid" id="legend-grid"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="num" id="stat-books">100+</div><div class="lbl">Books</div></div>
+      <div class="stat"><div class="num">12</div><div class="lbl">Themes</div></div>
+      <div class="stat"><div class="num">6</div><div class="lbl">Chairs</div></div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip">
+    <div class="tt-title"></div>
+    <div class="tt-author"></div>
+    <div class="tt-meta"></div>
+  </div>
+
+  <div class="detail-panel" id="detail">
+    <button class="detail-close" id="detail-close">&times;</button>
+    <div class="detail-eyebrow" id="d-eyebrow">From the library</div>
+    <div class="detail-title" id="d-title"></div>
+    <div class="detail-author" id="d-author"></div>
+    <div class="detail-rows">
+      <div class="detail-row">
+        <div class="k">Theme</div>
+        <div class="v" id="d-theme"></div>
+      </div>
+      <div class="detail-row">
+        <div class="k">Most relevant at</div>
+        <div class="v" id="d-phase"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    /* ========== DATA ========== */
+    const THEMES = [
+      { n: "Vision & Strategy",       c: "#e8b339" },
+      { n: "Communication",           c: "#c97e58" },
+      { n: "Decision Making",         c: "#8fa9c4" },
+      { n: "Emotional Intelligence",  c: "#d96b7e" },
+      { n: "Team Building",           c: "#a8c896" },
+      { n: "Culture & Values",        c: "#b89dc7" },
+      { n: "Coaching & Mentoring",    c: "#7fb8b2" },
+      { n: "Change Management",       c: "#e89856" },
+      { n: "Influence & Negotiation", c: "#9a7fc4" },
+      { n: "Execution",               c: "#d4a847" },
+      { n: "Innovation",              c: "#6fc4ad" },
+      { n: "Personal Mastery",        c: "#f0d785" },
+    ];
+
+    const PHASES = [
+      "Individual Contributor",
+      "Team Lead",
+      "Manager",
+      "Director",
+      "VP / Senior Leader",
+      "CEO / C-Suite",
+    ];
+
+    const BOOKS = [
+      // Vision & Strategy
+      {t:"Good to Great",a:"Jim Collins",th:0,ph:4},
+      {t:"Built to Last",a:"Jim Collins",th:0,ph:5},
+      {t:"Blue Ocean Strategy",a:"Kim & Mauborgne",th:0,ph:4},
+      {t:"The Innovator's Dilemma",a:"Clayton Christensen",th:0,ph:4},
+      {t:"Playing to Win",a:"Lafley & Martin",th:0,ph:5},
+      {t:"Start With Why",a:"Simon Sinek",th:0,ph:2},
+      {t:"Good Strategy Bad Strategy",a:"Richard Rumelt",th:0,ph:3},
+      {t:"7 Powers",a:"Hamilton Helmer",th:0,ph:5},
+      {t:"Hit Refresh",a:"Satya Nadella",th:0,ph:5},
+      {t:"Only the Paranoid Survive",a:"Andy Grove",th:0,ph:5},
+
+      // Communication
+      {t:"Crucial Conversations",a:"Patterson et al",th:1,ph:1},
+      {t:"Never Split the Difference",a:"Chris Voss",th:1,ph:2},
+      {t:"How to Win Friends & Influence People",a:"Dale Carnegie",th:1,ph:0},
+      {t:"Made to Stick",a:"Chip & Dan Heath",th:1,ph:2},
+      {t:"Talk Like TED",a:"Carmine Gallo",th:1,ph:2},
+      {t:"Radical Candor",a:"Kim Scott",th:1,ph:2},
+      {t:"Nonviolent Communication",a:"Marshall Rosenberg",th:1,ph:1},
+      {t:"Difficult Conversations",a:"Stone, Patton, Heen",th:1,ph:2},
+      {t:"Resonate",a:"Nancy Duarte",th:1,ph:3},
+
+      // Decision Making
+      {t:"Thinking, Fast and Slow",a:"Daniel Kahneman",th:2,ph:3},
+      {t:"Decisive",a:"Chip & Dan Heath",th:2,ph:2},
+      {t:"Smart Choices",a:"Hammond et al",th:2,ph:2},
+      {t:"Predictably Irrational",a:"Dan Ariely",th:2,ph:2},
+      {t:"Noise",a:"Kahneman, Sibony, Sunstein",th:2,ph:4},
+      {t:"Black Box Thinking",a:"Matthew Syed",th:2,ph:3},
+      {t:"Superforecasting",a:"Tetlock & Gardner",th:2,ph:4},
+      {t:"The Paradox of Choice",a:"Barry Schwartz",th:2,ph:1},
+
+      // Emotional Intelligence
+      {t:"Emotional Intelligence",a:"Daniel Goleman",th:3,ph:1},
+      {t:"Primal Leadership",a:"Goleman, Boyatzis, McKee",th:3,ph:3},
+      {t:"Search Inside Yourself",a:"Chade-Meng Tan",th:3,ph:1},
+      {t:"Daring Greatly",a:"Brené Brown",th:3,ph:2},
+      {t:"Dare to Lead",a:"Brené Brown",th:3,ph:3},
+      {t:"Rising Strong",a:"Brené Brown",th:3,ph:2},
+      {t:"Permission to Feel",a:"Marc Brackett",th:3,ph:2},
+      {t:"The Gifts of Imperfection",a:"Brené Brown",th:3,ph:1},
+
+      // Team Building
+      {t:"The Five Dysfunctions of a Team",a:"Patrick Lencioni",th:4,ph:2},
+      {t:"The Ideal Team Player",a:"Patrick Lencioni",th:4,ph:1},
+      {t:"Team of Teams",a:"Stanley McChrystal",th:4,ph:4},
+      {t:"Multipliers",a:"Liz Wiseman",th:4,ph:3},
+      {t:"Tribes",a:"Seth Godin",th:4,ph:2},
+      {t:"The Wisdom of Teams",a:"Katzenbach & Smith",th:4,ph:2},
+      {t:"Turn the Ship Around!",a:"L. David Marquet",th:4,ph:3},
+      {t:"Crucial Accountability",a:"Patterson et al",th:4,ph:3},
+
+      // Culture & Values
+      {t:"The Culture Code",a:"Daniel Coyle",th:5,ph:3},
+      {t:"Delivering Happiness",a:"Tony Hsieh",th:5,ph:5},
+      {t:"No Rules Rules",a:"Hastings & Meyer",th:5,ph:5},
+      {t:"Powerful",a:"Patty McCord",th:5,ph:4},
+      {t:"Reinventing Organizations",a:"Frederic Laloux",th:5,ph:5},
+      {t:"Drive",a:"Daniel Pink",th:5,ph:2},
+      {t:"The Advantage",a:"Patrick Lencioni",th:5,ph:4},
+      {t:"Tribal Leadership",a:"Logan, King, Fischer-Wright",th:5,ph:3},
+
+      // Coaching & Mentoring
+      {t:"The Coaching Habit",a:"Michael Bungay Stanier",th:6,ph:2},
+      {t:"Trillion Dollar Coach",a:"Schmidt, Rosenberg, Eagle",th:6,ph:5},
+      {t:"The Inner Game of Work",a:"Tim Gallwey",th:6,ph:2},
+      {t:"Helping People Change",a:"Boyatzis, Smith, Van Oosten",th:6,ph:3},
+      {t:"Coaching for Performance",a:"John Whitmore",th:6,ph:2},
+      {t:"The Advice Trap",a:"Michael Bungay Stanier",th:6,ph:3},
+
+      // Change Management
+      {t:"Leading Change",a:"John Kotter",th:7,ph:4},
+      {t:"Switch",a:"Chip & Dan Heath",th:7,ph:2},
+      {t:"Who Moved My Cheese?",a:"Spencer Johnson",th:7,ph:0},
+      {t:"The Heart of Change",a:"Kotter & Cohen",th:7,ph:3},
+      {t:"Immunity to Change",a:"Kegan & Lahey",th:7,ph:3},
+      {t:"Antifragile",a:"Nassim Taleb",th:7,ph:4},
+      {t:"Our Iceberg Is Melting",a:"John Kotter",th:7,ph:2},
+
+      // Influence & Negotiation
+      {t:"Influence",a:"Robert Cialdini",th:8,ph:2},
+      {t:"Pre-Suasion",a:"Robert Cialdini",th:8,ph:3},
+      {t:"Getting to Yes",a:"Fisher & Ury",th:8,ph:2},
+      {t:"Power",a:"Jeffrey Pfeffer",th:8,ph:3},
+      {t:"7 Rules of Power",a:"Jeffrey Pfeffer",th:8,ph:4},
+      {t:"The 48 Laws of Power",a:"Robert Greene",th:8,ph:3},
+      {t:"Yes!",a:"Goldstein, Martin, Cialdini",th:8,ph:2},
+
+      // Execution
+      {t:"The 4 Disciplines of Execution",a:"McChesney et al",th:9,ph:3},
+      {t:"Execution",a:"Bossidy & Charan",th:9,ph:4},
+      {t:"High Output Management",a:"Andy Grove",th:9,ph:2},
+      {t:"Measure What Matters",a:"John Doerr",th:9,ph:3},
+      {t:"The Hard Thing About Hard Things",a:"Ben Horowitz",th:9,ph:5},
+      {t:"Scaling Up",a:"Verne Harnish",th:9,ph:4},
+      {t:"Extreme Ownership",a:"Willink & Babin",th:9,ph:2},
+      {t:"The Effective Executive",a:"Peter Drucker",th:9,ph:3},
+      {t:"The Goal",a:"Eliyahu Goldratt",th:9,ph:2},
+
+      // Innovation
+      {t:"The Lean Startup",a:"Eric Ries",th:10,ph:2},
+      {t:"Zero to One",a:"Peter Thiel",th:10,ph:5},
+      {t:"Crossing the Chasm",a:"Geoffrey Moore",th:10,ph:4},
+      {t:"Loonshots",a:"Safi Bahcall",th:10,ph:4},
+      {t:"The Innovator's Solution",a:"Christensen & Raynor",th:10,ph:4},
+      {t:"Creativity, Inc.",a:"Ed Catmull",th:10,ph:5},
+      {t:"Sprint",a:"Jake Knapp",th:10,ph:2},
+      {t:"Originals",a:"Adam Grant",th:10,ph:2},
+      {t:"The Innovator's DNA",a:"Dyer, Gregersen, Christensen",th:10,ph:3},
+
+      // Personal Mastery
+      {t:"The 7 Habits of Highly Effective People",a:"Stephen Covey",th:11,ph:0},
+      {t:"Atomic Habits",a:"James Clear",th:11,ph:0},
+      {t:"Deep Work",a:"Cal Newport",th:11,ph:1},
+      {t:"Mindset",a:"Carol Dweck",th:11,ph:0},
+      {t:"Grit",a:"Angela Duckworth",th:11,ph:0},
+      {t:"Man's Search for Meaning",a:"Viktor Frankl",th:11,ph:0},
+      {t:"Essentialism",a:"Greg McKeown",th:11,ph:1},
+      {t:"Meditations",a:"Marcus Aurelius",th:11,ph:1},
+      {t:"The Almanack of Naval Ravikant",a:"Eric Jorgenson",th:11,ph:1},
+      {t:"Range",a:"David Epstein",th:11,ph:2},
+      {t:"The War of Art",a:"Steven Pressfield",th:11,ph:0},
+      {t:"The Power of Now",a:"Eckhart Tolle",th:11,ph:1},
+      {t:"The Obstacle Is the Way",a:"Ryan Holiday",th:11,ph:1},
+      {t:"Ego Is the Enemy",a:"Ryan Holiday",th:11,ph:2},
+      {t:"Discipline Equals Freedom",a:"Jocko Willink",th:11,ph:1},
+    ];
+
+    /* ========== STAT UPDATE ========== */
+    document.getElementById('stat-books').textContent = BOOKS.length;
+
+    /* ========== POSITION BOOKS IN 3D ========== */
+    // 6 concentric "phase rings" at increasing radii on the equatorial plane,
+    // with vertical jitter. 12 themes spread evenly around the angle.
+    const phaseRadii = [4.5, 7.5, 10.5, 13.5, 16.5, 19.5];
+    const themeStep = (Math.PI * 2) / 12;
+
+    BOOKS.forEach(b => {
+      const phaseR = phaseRadii[b.ph];
+      // Theme cluster center angle (use deterministic seed via index for stable layout)
+      const baseAngle = b.th * themeStep;
+      // Pseudo-random but deterministic jitter from string
+      const seed = (b.t.charCodeAt(0) * 13 + b.t.charCodeAt(b.t.length - 1) * 7) % 1000;
+      const rnd = (n) => {
+        const x = Math.sin(seed + n) * 10000;
+        return x - Math.floor(x);
+      };
+      const angleJ = (rnd(1) - 0.5) * themeStep * 0.85;
+      const radiusJ = (rnd(2) - 0.5) * 1.6;
+      const verticalJ = (rnd(3) - 0.5) * 2.2;
+      const angle = baseAngle + angleJ;
+      const r = phaseR + radiusJ;
+      b.pos = new THREE.Vector3(
+        Math.cos(angle) * r,
+        verticalJ,
+        Math.sin(angle) * r
+      );
+    });
+
+    /* ========== THREE.JS SETUP ========== */
+    const canvas = document.getElementById('galaxy');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 600);
+    camera.position.set(0, 12, 32);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 8;
+    controls.maxDistance = 70;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.35;
+    controls.enablePan = false;
+
+    /* ----- Background star field ----- */
+    const bgGeo = new THREE.BufferGeometry();
+    const bgPos = [];
+    const bgCol = [];
+    for (let i = 0; i < 1200; i++) {
+      const r = 80 + Math.random() * 80;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      bgPos.push(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      );
+      const tint = 0.6 + Math.random() * 0.4;
+      bgCol.push(tint, tint * 0.92, tint * 0.75);
+    }
+    bgGeo.setAttribute('position', new THREE.Float32BufferAttribute(bgPos, 3));
+    bgGeo.setAttribute('color', new THREE.Float32BufferAttribute(bgCol, 3));
+    const bgStars = new THREE.Points(bgGeo, new THREE.PointsMaterial({
+      size: 0.18, sizeAttenuation: true, vertexColors: true,
+      transparent: true, opacity: 0.55, depthWrite: false,
+    }));
+    scene.add(bgStars);
+
+    /* ----- Glow texture (canvas-generated radial gradient) ----- */
+    function makeGlowTex(stop1, stop2, stop3) {
+      const c = document.createElement('canvas');
+      c.width = c.height = 128;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, stop1);
+      g.addColorStop(0.4, stop2);
+      g.addColorStop(1, stop3);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+    const starTex = makeGlowTex('rgba(255,255,255,1)', 'rgba(255,240,200,0.6)', 'rgba(255,200,100,0)');
+    const coreGlowTex = makeGlowTex('rgba(255,235,170,1)', 'rgba(232,179,57,0.55)', 'rgba(180,120,40,0)');
+
+    /* ----- Central core ----- */
+    const coreGroup = new THREE.Group();
+    const coreInner = new THREE.Mesh(
+      new THREE.SphereGeometry(1.0, 48, 48),
+      new THREE.MeshBasicMaterial({ color: 0xfff1c4 })
+    );
+    coreGroup.add(coreInner);
+
+    const coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: coreGlowTex, color: 0xe8b339,
+      transparent: true, opacity: 0.85,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    coreGlow.scale.set(11, 11, 1);
+    coreGroup.add(coreGlow);
+
+    const coreHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: coreGlowTex, color: 0xd4a847,
+      transparent: true, opacity: 0.35,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    coreHalo.scale.set(22, 22, 1);
+    coreGroup.add(coreHalo);
+
+    scene.add(coreGroup);
+
+    /* ----- Core label ("Great Leadership") as an HTML overlay we draw via sprite ----- */
+    // Create a label canvas
+    function makeLabel(text, opts={}) {
+      const fs = opts.fs || 36;
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.font = `italic 600 ${fs}px 'Cormorant Garamond', serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = opts.color || '#f0d785';
+      ctx.shadowColor = 'rgba(232, 179, 57, 0.8)';
+      ctx.shadowBlur = 24;
+      ctx.fillText(text, 512, 128);
+      return new THREE.CanvasTexture(c);
+    }
+    const coreLabel = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: makeLabel('Great Leadership'),
+      transparent: true, depthWrite: false, depthTest: false,
+    }));
+    coreLabel.scale.set(10, 2.5, 1);
+    coreLabel.position.set(0, -2.2, 0);
+    coreGroup.add(coreLabel);
+
+    /* ----- Phase rings ----- */
+    const phaseRings = [];
+    phaseRadii.forEach((r, i) => {
+      // Thin torus ring
+      const ringGeo = new THREE.TorusGeometry(r, 0.025, 8, 220);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xd4a847, transparent: true, opacity: 0.18, depthWrite: false,
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.userData.phase = i;
+      scene.add(ring);
+      phaseRings.push(ring);
+    });
+
+    /* ----- Book stars ----- */
+    const bookGroup = new THREE.Group();
+    const bookSprites = [];
+    BOOKS.forEach((b, i) => {
+      const mat = new THREE.SpriteMaterial({
+        map: starTex,
+        color: new THREE.Color(THEMES[b.th].c),
+        transparent: true,
+        opacity: 0.88,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const s = new THREE.Sprite(mat);
+      s.position.copy(b.pos);
+      s.scale.set(0.55, 0.55, 1);
+      s.userData = { book: b, baseScale: 0.55, baseOpacity: 0.88 };
+      bookGroup.add(s);
+      bookSprites.push(s);
+    });
+    scene.add(bookGroup);
+
+    /* ========== LEGEND BUILD ========== */
+    const legendGrid = document.getElementById('legend-grid');
+    THEMES.forEach((t, i) => {
+      const el = document.createElement('div');
+      el.className = 'legend-item';
+      el.dataset.theme = i;
+      el.innerHTML = `<span class="legend-dot" style="background:${t.c};color:${t.c}"></span><span>${t.n}</span>`;
+      el.addEventListener('click', () => toggleTheme(i));
+      legendGrid.appendChild(el);
+    });
+
+    /* ========== STATE ========== */
+    let activeChair = -1;        // -1 = all
+    let activeThemes = new Set(); // empty = all
+    let hoveredSprite = null;
+    let selectedSprite = null;
+
+    /* ========== INTERACTIONS ========== */
+    const chairSelect = document.getElementById('chair-select');
+    chairSelect.addEventListener('change', () => {
+      activeChair = parseInt(chairSelect.value, 10);
+      applyFilters();
+    });
+
+    function toggleTheme(i) {
+      if (activeThemes.has(i)) activeThemes.delete(i);
+      else activeThemes.add(i);
+      // Update legend visuals
+      document.querySelectorAll('.legend-item').forEach(el => {
+        const idx = parseInt(el.dataset.theme, 10);
+        if (activeThemes.size === 0) {
+          el.classList.remove('active', 'muted');
+        } else if (activeThemes.has(idx)) {
+          el.classList.add('active');
+          el.classList.remove('muted');
+        } else {
+          el.classList.add('muted');
+          el.classList.remove('active');
+        }
+      });
+      applyFilters();
+    }
+
+    function applyFilters() {
+      bookSprites.forEach(s => {
+        const b = s.userData.book;
+        const chairMatch = activeChair === -1 || b.ph === activeChair;
+        const themeMatch = activeThemes.size === 0 || activeThemes.has(b.th);
+        const active = chairMatch && themeMatch;
+        s.material.opacity = active ? s.userData.baseOpacity : 0.06;
+        s.userData.active = active;
+      });
+      // Highlight matching ring
+      phaseRings.forEach((r, i) => {
+        if (activeChair === -1) r.material.opacity = 0.18;
+        else r.material.opacity = i === activeChair ? 0.55 : 0.06;
+      });
+    }
+    applyFilters();
+
+    /* ----- Raycaster for hover/click ----- */
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const tooltip = document.getElementById('tooltip');
+    const ttTitle = tooltip.querySelector('.tt-title');
+    const ttAuthor = tooltip.querySelector('.tt-author');
+    const ttMeta = tooltip.querySelector('.tt-meta');
+
+    canvas.addEventListener('pointermove', (e) => {
+      pointer.x = (e.clientX / innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+      tooltip.style.left = (e.clientX + 16) + 'px';
+      tooltip.style.top = (e.clientY + 16) + 'px';
+    });
+
+    canvas.addEventListener('click', () => {
+      if (hoveredSprite) {
+        selectBook(hoveredSprite.userData.book);
+      } else {
+        closeDetail();
+      }
+    });
+
+    /* ----- Detail panel ----- */
+    const detail = document.getElementById('detail');
+    const dTitle = document.getElementById('d-title');
+    const dAuthor = document.getElementById('d-author');
+    const dTheme = document.getElementById('d-theme');
+    const dPhase = document.getElementById('d-phase');
+    document.getElementById('detail-close').addEventListener('click', closeDetail);
+
+    function selectBook(book) {
+      dTitle.textContent = book.t;
+      dAuthor.textContent = book.a;
+      dTheme.innerHTML = `<span class="legend-dot" style="background:${THEMES[book.th].c};color:${THEMES[book.th].c}"></span>${THEMES[book.th].n}`;
+      dPhase.textContent = PHASES[book.ph];
+      detail.classList.add('open');
+    }
+    function closeDetail() {
+      detail.classList.remove('open');
+    }
+
+    /* ----- Resize ----- */
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    /* ========== ANIMATE ========== */
+    const clock = new THREE.Clock();
+    function animate() {
+      const t = clock.getElapsedTime();
+
+      // Core pulse
+      const pulse = 1 + Math.sin(t * 1.4) * 0.06;
+      coreInner.scale.setScalar(pulse);
+      coreGlow.material.opacity = 0.75 + Math.sin(t * 1.4) * 0.12;
+      coreHalo.material.opacity = 0.3 + Math.sin(t * 0.9 + 1) * 0.08;
+
+      // Twinkle book stars
+      bookSprites.forEach((s, i) => {
+        if (!s.userData.active) return;
+        const tw = Math.sin(t * 1.8 + i * 0.7) * 0.08 + 0.92;
+        s.scale.setScalar(s.userData.baseScale * tw);
+      });
+
+      // Slowly rotate background stars opposite to camera for parallax feel
+      bgStars.rotation.y = t * 0.01;
+
+      // Hover detection
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(bookSprites, false);
+      const firstActive = hits.find(h => h.object.userData.active);
+
+      if (firstActive) {
+        const sprite = firstActive.object;
+        if (sprite !== hoveredSprite) {
+          if (hoveredSprite) hoveredSprite.userData.baseScale = 0.55;
+          hoveredSprite = sprite;
+          hoveredSprite.userData.baseScale = 1.0;
+        }
+        const b = sprite.userData.book;
+        ttTitle.textContent = b.t;
+        ttAuthor.textContent = b.a;
+        ttMeta.textContent = `${THEMES[b.th].n} · ${PHASES[b.ph]}`;
+        tooltip.classList.add('show');
+        canvas.style.cursor = 'pointer';
+      } else {
+        if (hoveredSprite) {
+          hoveredSprite.userData.baseScale = 0.55;
+          hoveredSprite = null;
+        }
+        tooltip.classList.remove('show');
+        canvas.style.cursor = 'grab';
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
